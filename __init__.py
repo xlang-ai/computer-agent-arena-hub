@@ -1,10 +1,13 @@
 # Re-export main components
-from BaseAgent import BaseAgent
-from AgentManager import AgentManager, SessionConfig
-from action.main import Action
-from observation.main import Observation
-from utils.schemas import ObservationType, OBS_DICT
-from utils.exceptions import (
+from .paths import setup_import_paths
+setup_import_paths()
+
+from .BaseAgent import BaseAgent
+from .AgentManager import AgentManager, SessionConfig
+from .action.main import Action
+from .observation.main import Observation
+from .utils.schemas import ObservationType, OBS_DICT
+from .utils.exceptions import (
     EnvironmentError, 
     ProcessingError, 
     StepError, 
@@ -12,11 +15,11 @@ from utils.exceptions import (
     StopExecution,
     VLMPredictionError
 )
-from utils import Timer, need_visualization
-from hub.PromptAgent.main import PromptAgent
-from hub.Anthropic.main import AnthropicComputerDemoAgent
-from test import test_anthropic_agent, test_prompt_agent
-from temp import *
+from .utils import Timer, need_visualization
+from .hub.PromptAgent.main import PromptAgent
+from .hub.Anthropic.main import AnthropicComputerDemoAgent
+from .test import test_anthropic_agent, test_prompt_agent
+from .temp import *
 
 # Make these available when importing from agents
 __all__ = [
