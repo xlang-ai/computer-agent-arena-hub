@@ -7,24 +7,33 @@ from functools import wraps
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple, Any
 
-from AgentManager import SessionConfig, AgentManager
-from observation import Observation
-from action import Action
 
-from utils import ObservationType, OBS_DICT
-from utils import ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
-from utils import Timer, need_visualization
-from utils.constants import AGENT_MAX_STEPS
 
-ENV_TYPE = "local"
+ENV_TYPE = ""
 try:    
     # for deploy environment
+    from backend.agents.AgentManager import SessionConfig, AgentManager
+    from backend.agents.observation.main import Observation
+    from backend.agents.action.main import Action
+    from backend.agents.utils.schemas import ObservationType, OBS_DICT
+    from backend.agents.utils.exceptions import ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
+    from backend.agents.utils.utils import Timer, need_visualization
+    from backend.agents.utils.constants import AGENT_MAX_STEPS
+
     from backend.logger import agent_logger as logger
     from backend.utils.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
     from backend.desktop_env.desktop_env import DesktopEnv
     ENV_TYPE = "deploy"
 except ImportError:
     # for test environments
+    from AgentManager import SessionConfig, AgentManager
+    from observation import Observation
+    from action import Action
+    from utils import ObservationType, OBS_DICT
+    from utils import ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
+    from utils import Timer, need_visualization
+    from utils.constants import AGENT_MAX_STEPS
+
     from temp.logger import agent_logger as logger
     from temp.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
     from temp.desktop_env import DesktopEnv

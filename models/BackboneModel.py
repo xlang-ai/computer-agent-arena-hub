@@ -1,7 +1,6 @@
 from .LiteLLMModel import LiteLLMModel
 from .BedrockModel import BedrockModel
 
-ENV_TYPE = "local"
 try:
     from backend.logger import model_logger as logger
 except:

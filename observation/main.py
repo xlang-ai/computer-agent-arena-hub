@@ -4,6 +4,9 @@ Main module for processing observations
 
 from typing import List, Dict, Iterator
 import logging
+try:
+    from backend.agents.utils.schemas import ObservationType
+except ImportError:
 from utils.schemas import ObservationType
 from .obs_utils import process_screenshot, process_a11y_tree, process_som
 

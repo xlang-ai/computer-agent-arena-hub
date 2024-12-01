@@ -10,22 +10,23 @@ import threading
 from dataclasses import dataclass
 from contextlib import contextmanager
 from typing import Any, Dict, Optional, Union
-
 from flask_socketio import SocketIO
 
-from observation.obs_utils import encode_image
-from utils.exceptions import StopExecution
-from utils.schemas import AgentStatus
-
 # Determine environment type
-ENV_TYPE = "local"
+ENV_TYPE = ""
 try:
+    from backend.agents.observation.obs_utils import encode_image
+    from backend.agents.utils.exceptions import StopExecution
+    from backend.agents.utils.schemas import AgentStatus
+    
     from backend.api.data_manager import Conversation, Session
     from backend.main import env_managers, user_manager
     ENV_TYPE = "deploy"
 except ImportError:
-    pass
-
+    from observation.obs_utils import encode_image
+    from utils.exceptions import StopExecution
+    from utils.schemas import AgentStatus
+    ENV_TYPE = "local"
 
 @dataclass
 class SessionConfig:

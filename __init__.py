@@ -1,26 +1,38 @@
-# Re-export main components
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-from BaseAgent import BaseAgent
-from AgentManager import AgentManager, SessionConfig
-from action.main import Action
-from observation.main import Observation
-from utils.schemas import ObservationType, OBS_DICT
-from utils.exceptions import (
-    EnvironmentError, 
-    ProcessingError, 
-    StepError, 
-    StepLimitExceeded, 
-    StopExecution,
-    VLMPredictionError
-)
-from utils import Timer, need_visualization
-from hub.PromptAgent.main import PromptAgent
-from hub.Anthropic.main import AnthropicComputerDemoAgent
-from test import test_anthropic_agent, test_prompt_agent
-from temp import *
+try:
+    from backend.agents.BaseAgent import BaseAgent
+    from backend.agents.AgentManager import AgentManager, SessionConfig
+    from backend.agents.action.main import Action
+    from backend.agents.observation.main import Observation
+    from backend.agents.utils.schemas import ObservationType, OBS_DICT
+    from backend.agents.utils.exceptions import (
+        EnvironmentError, 
+        ProcessingError, 
+        StepError, 
+        StepLimitExceeded, 
+        StopExecution,
+        VLMPredictionError  
+    )
+    from backend.agents.utils.utils import Timer, need_visualization
+    from backend.agents.hub.PromptAgent.main import PromptAgent
+    from backend.agents.hub.Anthropic.main import AnthropicComputerDemoAgent
+    from backend.agents.test import test_anthropic_agent, test_prompt_agent
+    from backend.agents.temp import *
+except ImportError:
+    from BaseAgent import BaseAgent
+    from utils.schemas import ObservationType, OBS_DICT
+    from utils.exceptions import (
+        EnvironmentError, 
+        ProcessingError, 
+        StepError, 
+        StepLimitExceeded, 
+        StopExecution,
+        VLMPredictionError
+    )
+    from utils import Timer, need_visualization
+    from hub.PromptAgent.main import PromptAgent
+    from hub.Anthropic.main import AnthropicComputerDemoAgent
+    from test import test_anthropic_agent, test_prompt_agent
+    from temp import *
 
 # Make these available when importing from agents
 __all__ = [

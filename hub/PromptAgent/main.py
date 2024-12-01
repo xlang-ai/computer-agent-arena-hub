@@ -3,9 +3,6 @@ Implementation of the Prompt agent class for the agent hub.
 """
 from typing import List, Dict, Optional, Any, Union
 
-from BaseAgent import BaseAgent
-from models.BackboneModel import BackboneModel
-
 from .utils import (
     decode_image_from_base64,
     encode_image_to_base64,
@@ -20,14 +17,15 @@ from .prompt import (
     SYS_PROMPT_IN_A11Y_OUT_CODE, 
     SYS_PROMPT_IN_VISION_ACCESSIBILITY_OUT_CODE, 
     SYS_PROMPT_IN_SOM_OUT_TAG
-)   
+)
 
-
-ENV_TYPE = "local"
 try:
+    from backend.agents.BaseAgent import BaseAgent
+    from backend.agents.models.BackboneModel import BackboneModel
     from backend.desktop_env.desktop_env import DesktopEnv
-    ENV_TYPE = "deploy"
 except:
+    from BaseAgent import BaseAgent
+    from models.BackboneModel import BackboneModel
     from temp.desktop_env import DesktopEnv
 
 class PromptAgent(BaseAgent):
