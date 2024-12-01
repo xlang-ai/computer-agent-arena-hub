@@ -15,8 +15,6 @@ try:
     from backend.agents.utils.utils import Timer, need_visualization
     from backend.agents.hub.PromptAgent.main import PromptAgent
     from backend.agents.hub.Anthropic.main import AnthropicComputerDemoAgent
-    from backend.agents.test import test_anthropic_agent, test_prompt_agent
-    from backend.agents.temp import *
 except ImportError:
     from BaseAgent import BaseAgent
     from utils.schemas import ObservationType, OBS_DICT
@@ -54,6 +52,4 @@ __all__ = [
     'PromptAgent',
     'AnthropicComputerDemoAgent',
     'DesktopEnv',
-    'test_anthropic_agent',
-    'test_prompt_agent'
 ]
