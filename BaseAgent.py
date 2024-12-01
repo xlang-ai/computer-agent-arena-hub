@@ -14,10 +14,12 @@ from .utils.utils import Timer, need_visualization
 from .utils.constants import AGENT_MAX_STEPS
 
 try:    
-    from ..logger import agent_logger as logger
-    from ..utils.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
-    from ..desktop_env.desktop_env import DesktopEnv
+    # for deploy environment
+    from backend.logger import agent_logger as logger
+    from backend.utils.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
+    from backend.desktop_env.desktop_env import DesktopEnv
 except ImportError:
+    # for test environments
     from .temp.logger import agent_logger as logger
     from .temp.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
     from .temp.desktop_env.desktop_env import DesktopEnv

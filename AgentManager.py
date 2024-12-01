@@ -10,12 +10,10 @@ from .utils.exceptions import StopExecution
 from .utils.constants import AgentStatus
 
 try:
-    from ..api.data_manager import Conversation, Session
-    from ..main import env_managers, user_manager
+    from backend.api.data_manager import Conversation, Session
+    from backend.main import env_managers, user_manager
 except ImportError:
     pass
-    # from .temp.api.data_manager import Conversation, Session
-    # from .temp.main import env_managers, user_manager
 
 @dataclass
 class SessionConfig:
