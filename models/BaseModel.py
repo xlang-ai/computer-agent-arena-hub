@@ -1,3 +1,6 @@
+"""
+Base model class for all models
+"""
 import time
 import random
 from typing import List, Dict, Any
@@ -5,7 +8,13 @@ from functools import wraps
 from abc import ABC, abstractmethod
     
 class BaseModel(ABC):
+    """Base model class for all models"""
     def __init__(self, model_name: str):
+        """Initialize the base model.
+
+        Args:
+            model_name: The name of the model
+        """
         self.model_name = model_name
     
     @abstractmethod

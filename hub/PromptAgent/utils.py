@@ -1,3 +1,6 @@
+"""
+Utility functions for the Prompt agent.
+"""
 import base64
 import json
 from io import BytesIO
@@ -5,16 +8,32 @@ from PIL import Image, ImageDraw, ImageFont
 import re
 
 def decode_image_from_base64(base64_string):
+    """Decode an image from a base64 string.
+
+    Args:
+        base64_string: The base64 string
+    """
     image_data = base64.b64decode(base64_string)
     image = Image.open(BytesIO(image_data))
     return image
 
 def encode_image_to_base64(image):
+    """Encode an image to a base64 string.
+
+    Args:
+        image: The image
+    """
     buffered = BytesIO()
     image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 def draw_grid_with_number_labels(image, grid_size=100):
+    """Draw a grid with number labels on an image.
+
+    Args:
+        image: The image
+        grid_size: The grid size
+    """
     draw = ImageDraw.Draw(image)
     width, height = image.size
     
@@ -37,6 +56,11 @@ def draw_grid_with_number_labels(image, grid_size=100):
 
 
 def parse_actions_from_string(input_string):
+    """Parse the actions from the response.
+
+    Args:
+        input_string: The input string
+    """
     if input_string.strip() in ['WAIT', 'DONE', 'FAIL']:
         return [input_string.strip()]
     # Search for a JSON string within the input string
@@ -70,6 +94,11 @@ def parse_actions_from_string(input_string):
                 raise ValueError("Invalid response format: " + input_string)
 
 def parse_code_from_string(input_string):
+    """Parse the code from the response.
+
+    Args:
+        input_string: The input string
+    """
     input_string = "\n".join([line.strip() for line in input_string.split(';') if line.strip()])
     if input_string.strip() in ['WAIT', 'DONE', 'FAIL']:
         return [input_string.strip()]
@@ -104,7 +133,12 @@ def parse_code_from_string(input_string):
     return codes
 
 def parse_code_from_som_string(input_string, masks):
-    # parse the output string by masks
+    """Parse the code from the response.
+
+    Args:
+        input_string: The input string
+        masks: The masks
+    """
     tag_vars = ""
     for i, mask in enumerate(masks):
         x, y, w, h = mask

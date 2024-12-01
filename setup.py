@@ -1,3 +1,6 @@
+"""
+Setup script for the computer-agent-arena package.
+"""
 from setuptools import setup, find_packages
 
 setup(

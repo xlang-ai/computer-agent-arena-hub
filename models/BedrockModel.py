@@ -1,3 +1,6 @@
+"""
+Bedrock model class for all models
+"""
 import os
 import boto3
 from PIL import Image
@@ -14,10 +17,16 @@ ModelName2ModelID = {
     "claude-3-5-sonnet-20240620": "anthropic.claude-3-5-sonnet-20240620-v1:0",
     "claude-3-opus-20240229": "us.anthropic.claude-3-opus-20240229-v1:0",
     "llama3-2-90b-instruct": "us.meta.llama3-2-90b-instruct-v1:0"
-}
+} # Map from model name to model ID
 
 class BedrockModel(BaseModel):
+    """Bedrock model class for all models"""
     def __init__(self, model_name: str):
+        """Initialize the Bedrock model.
+
+        Args:
+            model_name: The name of the model
+        """
         super().__init__(model_name)
         self.client = boto3.client(
             "bedrock-runtime",
@@ -27,6 +36,14 @@ class BedrockModel(BaseModel):
         )
 
     def _format_content(self, content: list) -> list:
+        """Format the content.
+
+        Args:
+            content: The content to format
+
+        Returns:
+            The formatted content
+        """
         formatted_content = []
         if not self.model_name.startswith("llama"): # TEMP
             for item in content:
@@ -68,6 +85,14 @@ class BedrockModel(BaseModel):
         return formatted_content
 
     def _format_messages(self, messages: list) -> list:
+        """Format the messages.
+
+        Args:
+            messages: The messages to format
+
+        Returns:
+            The formatted messages
+        """
         formatted_messages = []
         for message in messages:
             if message["role"] == "system":
@@ -87,7 +112,14 @@ class BedrockModel(BaseModel):
     
     @BaseModel.retry(max_retries=3, retry_delay=2, backoff_factor=2, exceptions=(Exception,))
     def _completion(self, messages: list, max_tokens: int, top_p: float, temperature: float):
+        """Completion method for the Bedrock model.
 
+        Args:
+            messages: The messages to complete
+            max_tokens: The maximum number of tokens
+            top_p: The top-p sampling parameter
+            temperature: The sampling temperature
+        """
         formatted_messages = self._format_messages(messages)
         
         if not self.model_name.startswith("llama"): # TEMP
@@ -119,6 +151,14 @@ class BedrockModel(BaseModel):
         return response
     
     def completion(self, messages: list, max_tokens=2000, top_p=0.9, temperature=0.5):
+        """Completion method for the Bedrock model.
+
+        Args:
+            messages: The messages to complete
+            max_tokens: The maximum number of tokens
+            top_p: The top-p sampling parameter
+            temperature: The sampling temperature
+        """
         try:
             with Timer() as timer:
                 response = self._completion(

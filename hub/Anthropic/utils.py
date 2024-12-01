@@ -1,3 +1,6 @@
+"""
+Utility functions for the Anthropic API.
+"""
 from typing import List, Union, cast
 from enum import Enum
 from anthropic import (

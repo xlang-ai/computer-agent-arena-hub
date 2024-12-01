@@ -1,3 +1,7 @@
+"""
+System prompts for the Prompt agent.
+"""
+
 SYS_PROMPT_IN_SCREENSHOT_OUT_CODE_UBUNTU = """
 You are an agent performing desktop tasks as instructed, with knowledge of computers and internet access. Your code will control mouse and keyboard actions on a computer.
 

@@ -1,3 +1,6 @@
+"""
+Implementation of the Prompt agent class for the agent hub.
+"""
 from typing import List, Dict, Optional, Any, Union
 
 from agents.BaseAgent import BaseAgent
@@ -20,6 +23,10 @@ from backend.agents.hub.PromptAgent.prompt import (
     )
 
 class PromptAgent(BaseAgent):
+    """Implementation of the Prompt agent class for the agent hub.
+    Prompt agent is a basic ReAct-style agent that uses a prompt to generate actions after observing the environment.
+    """
+    
     def __init__(self,
             env: DesktopEnv,
             model_name: str,
@@ -36,6 +43,15 @@ class PromptAgent(BaseAgent):
             config=None,
             **kwargs
     ):
+        """Initialize the Prompt agent.
+
+        Args:
+            env: The environment
+            model_name: The name of the model
+            obs_options: The observation options
+            max_trajectory_length: The maximum trajectory length
+            a11y_tree_max_tokens: The maximum tokens for the accessibility tree
+        """
         super().__init__(
             env=env,
             obs_options=obs_options,
@@ -72,6 +88,12 @@ class PromptAgent(BaseAgent):
         
     @BaseAgent.predict_decorator
     def predict(self, task_instruction: str, obs: Dict):
+        """Predict the next action.
+
+        Args:
+            task_instruction: The task instruction
+            obs: The observation
+        """
         system_message = self.system_message
         messages = []
         
@@ -91,6 +113,15 @@ class PromptAgent(BaseAgent):
         })
 
         def create_message(obs_type, text_content, history = None, image_content=None, use_grid=True):
+            """Create a message.
+
+            Args:
+                obs_type: The observation type
+                text_content: The text content
+                history: The history
+                image_content: The image content
+                use_grid: Whether to use a grid
+            """
             history_prompt = ""
             if history:
                 history_prompt = f"\n\nThe previous observations and actions were:\n{history}\nDo NOT repeat the last action if it's not helpful.\n\n"
@@ -197,6 +228,12 @@ class PromptAgent(BaseAgent):
 
     
     def parse_actions(self, response: str, masks: Optional[List[Any]] = None) -> List[Any]:
+        """Parse the actions from the response.
+
+        Args:
+            response: The response
+            masks: The masks
+        """
         action_parsers = {
             "pyautogui": {
                 "screenshot": parse_code_from_string,
@@ -217,6 +254,11 @@ class PromptAgent(BaseAgent):
     
     @BaseAgent.run_decorator
     def run(self, task_instruction: str):
+        """Run the agent.
+
+        Args:
+            task_instruction: The task instruction
+        """
         while True:
             obs, obs_info = self.get_observation()
             actions, predict_info = self.predict(task_instruction=task_instruction, obs=obs)

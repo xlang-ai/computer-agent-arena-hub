@@ -24,9 +24,10 @@ SUPPORTED_MODELS = {
         "llama3-2-90b-instruct",
         # "claude-3-5-haiku-20241022", Text only not available
     }
-}
+} # Map from model name to model ID
 
 class BackboneModel:
+    """Backbone model class for all models"""
     def __init__(self, model_name: str):
         self.model_name = model_name
         self.model_type = self._get_model_type(model_name)
@@ -34,6 +35,11 @@ class BackboneModel:
         self.completion = self.model.completion
         
     def _get_model_instance(self, model_name: str):
+        """Get the model instance.
+
+        Args:
+            model_name: The name of the model
+        """
         if self.model_type == "litellm":
             return LiteLLMModel(model_name)
         elif self.model_type == "bedrock":
@@ -43,6 +49,11 @@ class BackboneModel:
             raise ValueError(f"Model type {self.model_type} is not supported")
     
     def _get_model_type(self, model_name: str):
+        """Get the model type.
+
+        Args:
+            model_name: The name of the model
+        """
         for model_type, models in SUPPORTED_MODELS.items():
             if model_name in models:
                 return model_type

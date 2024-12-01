@@ -1,8 +1,13 @@
+"""
+Utility functions for processing accessibility trees
+"""
+
 import io
 from typing import Tuple, List
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageDraw, ImageFont
 
+# Accessibility namespaces
 attributes_ns_ubuntu = "https://accessibility.windows.example.org/ns/attributes"
 attributes_ns_windows = "https://accessibility.windows.example.org/ns/attributes"
 state_ns_ubuntu = "https://accessibility.ubuntu.example.org/ns/state"
@@ -14,6 +19,16 @@ value_ns_windows = "https://accessibility.windows.example.org/ns/value"
 class_ns_windows = "https://accessibility.windows.example.org/ns/class"
 
 def judge_node(node: ET, platform="Ubuntu", check_image=False) -> bool:
+    """Judge if a node should be included in the accessibility tree.
+
+    Args:
+        node: The node to judge
+        platform: The platform of the node
+        check_image: Whether to check for image nodes
+
+    Returns:
+        bool: Whether the node should be included in the accessibility tree
+    """
     if platform == "Ubuntu":
         _state_ns = state_ns_ubuntu
         _component_ns = component_ns_ubuntu
@@ -68,7 +83,17 @@ def judge_node(node: ET, platform="Ubuntu", check_image=False) -> bool:
     keeps = keeps and coordinates[0] >= 0 and coordinates[1] >= 0 and sizes[0] > 0 and sizes[1] > 0
     return keeps
 
-def filter_nodes(root: ET, platform="Ubuntu", check_image=False):
+def filter_nodes(root: ET, platform="Ubuntu", check_image=False) -> List[ET]:
+    """Filter the nodes in the accessibility tree.
+
+    Args:
+        root: The root of the accessibility tree
+        platform: The platform of the accessibility tree
+        check_image: Whether to check for image nodes
+
+    Returns:
+        List[ET]: The filtered nodes
+    """
     filtered_nodes = []
 
     for node in root.iter():
@@ -78,14 +103,21 @@ def filter_nodes(root: ET, platform="Ubuntu", check_image=False):
 
     return filtered_nodes
 
-def linearize_accessibility_tree(accessibility_tree, platform="Ubuntu"):
+def linearize_accessibility_tree(accessibility_tree, platform="Ubuntu") -> str:
+    """Linearize the accessibility tree into a string.
 
-    if platform == "Ubuntu":
-        _attributes_ns = attributes_ns_ubuntu
-        _state_ns = state_ns_ubuntu
-        _component_ns = component_ns_ubuntu
-        _value_ns = value_ns_ubuntu
-    elif platform == "Windows":
+    Args:
+        accessibility_tree: The accessibility tree to linearize
+        platform: The platform of the accessibility tree
+
+    Returns:
+        str: The linearized accessibility tree
+    """
+    _attributes_ns = attributes_ns_ubuntu
+    _state_ns = state_ns_ubuntu
+    _component_ns = component_ns_ubuntu
+    _value_ns = value_ns_ubuntu
+    if platform == "Windows":
         _attributes_ns = attributes_ns_windows
         _state_ns = state_ns_windows
         _component_ns = component_ns_windows
@@ -127,13 +159,22 @@ def linearize_accessibility_tree(accessibility_tree, platform="Ubuntu"):
     return "\n".join(linearized_accessibility_tree)
 
 
-def draw_bounding_boxes(nodes, image_file_content, down_sampling_ratio=1.0, platform="Ubuntu"):
+def draw_bounding_boxes(nodes, image_file_content, down_sampling_ratio=1.0, platform="Ubuntu") -> Tuple[List[List[int]], List[ET], str, bytes]:
+    """Draw the bounding boxes of the nodes on the image.
 
-    if platform == "Ubuntu":
-        _state_ns = state_ns_ubuntu
-        _component_ns = component_ns_ubuntu
-        _value_ns = value_ns_ubuntu
-    elif platform == "Windows":
+    Args:
+        nodes: The nodes to draw
+        image_file_content: The content of the image file
+        down_sampling_ratio: The down sampling ratio
+        platform: The platform of the accessibility tree
+
+    Returns:
+        Tuple[List[List[int]], List[ET], str, bytes]: The marks, drew nodes, text information, and the image content
+    """
+    _state_ns = state_ns_ubuntu
+    _component_ns = component_ns_ubuntu
+    _value_ns = value_ns_ubuntu
+    if platform == "Windows":
         _state_ns = state_ns_windows
         _component_ns = component_ns_windows
         _value_ns = value_ns_windows
@@ -240,6 +281,12 @@ def draw_bounding_boxes(nodes, image_file_content, down_sampling_ratio=1.0, plat
 
 
 def print_nodes_with_indent(nodes, indent=0):
+    """Print the nodes with indentation.
+
+    Args:
+        nodes: The nodes to print
+        indent: The indentation level
+    """
     for node in nodes:
         print(' ' * indent, node.tag, node.attrib)
         print_nodes_with_indent(node, indent + 2)

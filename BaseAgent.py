@@ -1,3 +1,6 @@
+"""
+Base class for all agents in the system.
+"""
 import time
 import threading
 from functools import wraps
@@ -13,16 +16,18 @@ from .utils.exceptions import ProcessingError, StepError, StepLimitExceeded, Sto
 from .utils.utils import Timer, need_visualization
 from .utils.constants import AGENT_MAX_STEPS
 
+ENV_TYPE = "local"
 try:    
     # for deploy environment
     from backend.logger import agent_logger as logger
     from backend.utils.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
     from backend.desktop_env.desktop_env import DesktopEnv
+    ENV_TYPE = "deploy"
 except ImportError:
     # for test environments
     from .temp.logger import agent_logger as logger
     from .temp.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
-    from .temp.desktop_env.desktop_env import DesktopEnv
+    from .temp.desktop_env import DesktopEnv
 
 class BaseAgent(ABC):
     """Base class for all agents in the system.
@@ -374,11 +379,3 @@ class BaseAgent(ABC):
             e.g. return Input, Output, Others = predict(task_instruction, obs, history)
         """
         pass
-
-if __name__ == "__main__":
-    # test import
-    from .AgentManager import AgentManager
-    from .observation.main import Observation
-    from .action.main import Action
-    from .utils.constants import AgentStatus
-    pass

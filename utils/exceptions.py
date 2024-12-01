@@ -1,3 +1,7 @@
+"""
+Exceptions for the agents
+"""
+
 class AgentError(Exception):
     """Base exception class for all agent-related errors"""
     pass
@@ -23,13 +27,16 @@ class ValidationError(AgentError):
     pass 
 
 class VLMPredictionError(Exception):
+    """Raised when there are issues making predictions with the VLM"""
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
 class StopExecution(Exception):
+    """Raised when the execution should be stopped"""
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
 class StepLimitExceeded(Exception):
+    """Raised when the step limit is exceeded"""
     def __init__(self, *args: object) -> None:
         super().__init__(*args)

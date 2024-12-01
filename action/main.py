@@ -1,9 +1,18 @@
+"""
+Action class for the agent.
+"""
 import ast
 from typing import Dict, Any, Optional, Union
 
 class Action:
+    """Action class for the agent."""
     def __init__(self, raw_action: Union[Dict, str], action_space: str):
-        # Initialize action and action_space attributes
+        """Initialize the Action class.
+
+        Args:
+            raw_action: The raw action
+            action_space: The action space
+        """
         self._action_space = None
         self._action = None
         self.action_space = action_space
@@ -71,8 +80,7 @@ class Action:
                 f"Invalid action space: {self._action_space}, allowed spaces are: pyautogui, claude_computer_use")
 
     def __str__(self) -> str:
-        """
-        Returns a string representation of the Action instance.
+        """Return a string representation of the Action instance.
 
         Returns:
             str: A string showing the action space and action value
@@ -80,9 +88,19 @@ class Action:
         return f"Action(action_space='{self._action_space}', action='{self._action}')"
 
     def get_action(self) -> Optional[str]:
+        """Get the action.
+
+        Returns:
+            str: The action
+        """
         return self._action
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert the action to a dictionary.
+
+        Returns:
+            dict: The action as a dictionary
+        """
         return {"action_space": self._action_space, "action": self._action}
 
     def _is_valid_python_code(self, code: str) -> bool:
@@ -102,6 +120,14 @@ class Action:
             raise ValueError("Invalid Python code syntax")
 
     def _is_valid_claude_computer_use_action(self, action: Dict[str, Any]) -> bool:
+        """Validate if the given action is valid for the claude_computer_use action space.
+
+        Args:
+            action: The action to validate
+
+        Returns:
+            bool: True if action is valid, False otherwise
+        """
         if not isinstance(action, dict):
             raise ValueError("Invalid action format for claude_computer_use")
         if not (action.get("name") and action.get("input") and action.get("id")):
