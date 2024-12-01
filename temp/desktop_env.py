@@ -8,3 +8,6 @@ class DesktopEnv:
     def set_obs_options(self, obs_options):
         print(f"Setting obs options to {obs_options}")
         self.obs_options = obs_options
+
+    def _get_obs(self):
+        pass
