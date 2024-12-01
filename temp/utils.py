@@ -11,7 +11,7 @@ from io import BytesIO
 from datetime import datetime
 from typing import Optional, Union, Any, List, Dict
 
-from ..models.BackboneModel import BackboneModel
+from models.BackboneModel import BackboneModel
 
 
     
@@ -134,5 +134,8 @@ General rules:
     except Exception as e:
         return action
     
+def get_temp_video_url(video_path):
+    pass
 
-
+def pretty_print(text):
+    pass

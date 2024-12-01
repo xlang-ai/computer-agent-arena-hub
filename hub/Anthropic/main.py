@@ -24,16 +24,16 @@ from anthropic.types.beta import (
 )
 
 # from agents.BaseAgent import BaseAgent
-from ...BaseAgent import BaseAgent
-from ...AgentManager import SessionConfig
+from BaseAgent import BaseAgent
+from AgentManager import SessionConfig
 
 
 from .utils import COMPUTER_USE_BETA_FLAG, PROMPT_CACHING_BETA_FLAG,SYSTEM_PROMPT, SYSTEM_PROMPT_WINDOWS, APIProvider, PROVIDER_TO_DEFAULT_MODEL_NAME
 from .utils import _make_api_tool_result, _response_to_params, _inject_prompt_caching, _maybe_filter_to_n_most_recent_images
 
-from ...action.main import Action
-from ...utils.utils import Timer, need_visualization
-from ...utils.exceptions import EnvironmentError, ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
+from action import Action
+from utils import Timer, need_visualization
+from utils import EnvironmentError, ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
 
 ENV_TYPE = "local"
 try:
@@ -42,9 +42,9 @@ try:
     from backend.desktop_env.desktop_env import DesktopEnv
     ENV_TYPE = "deploy"
 except:
-    from ...temp.logger import computer_use_logger as logger
-    from ...temp.utils import pretty_print
-    from ...temp.desktop_env import DesktopEnv
+    from temp.logger import computer_use_logger as logger
+    from temp.utils import pretty_print
+    from temp.desktop_env import DesktopEnv
 
 class AnthropicComputerDemoAgent(BaseAgent):
     def __init__(self,

@@ -11,9 +11,9 @@ from .exceptions import (
     StopExecution,
     VLMPredictionError
 )
-from .schemas import ObservationType, OBS_DICT
+from .schemas import ObservationType, OBS_DICT, AgentStatus
 from .utils import Timer, need_visualization
-from .constants import AGENT_MAX_STEPS, AgentStatus
+from .constants import AGENT_MAX_STEPS
 
 __all__ = [
     # Exceptions

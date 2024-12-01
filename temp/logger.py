@@ -41,6 +41,7 @@ class LoggerFactory:
         return cls._loggers[name]
 
 LoggerFactory.setup_basic_config()
+model_logger = LoggerFactory.get_logger("model_logger")
 agent_logger = LoggerFactory.get_logger("agent_logger")
 computer_use_logger = LoggerFactory.get_logger("computer_use_logger")
 env_quick_setup_logger = LoggerFactory.get_logger("env_quick_setup_logger")

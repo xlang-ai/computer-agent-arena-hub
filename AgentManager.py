@@ -13,9 +13,9 @@ from typing import Any, Dict, Optional, Union
 
 from flask_socketio import SocketIO
 
-from .observation.obs_utils import encode_image
-from .utils.exceptions import StopExecution
-from .utils.schemas import AgentStatus
+from observation.obs_utils import encode_image
+from utils.exceptions import StopExecution
+from utils.schemas import AgentStatus
 
 # Determine environment type
 ENV_TYPE = "local"
@@ -45,8 +45,8 @@ class SessionConfig:
     session_id: str
     region: str
     agent_idx: int
-    session: Optional[Session] = None
-    conversation: Optional[Conversation] = None
+    session: Any
+    conversation: Any
     socketio: Optional[SocketIO] = None
     stop_event: Optional[threading.Event] = None
 

@@ -7,14 +7,14 @@ from functools import wraps
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple, Any
 
-from .AgentManager import SessionConfig, AgentManager
-from .observation.main import Observation
-from .action.main import Action
+from AgentManager import SessionConfig, AgentManager
+from observation import Observation
+from action import Action
 
-from .utils.schemas import ObservationType, OBS_DICT
-from .utils.exceptions import ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
-from .utils.utils import Timer, need_visualization
-from .utils.constants import AGENT_MAX_STEPS
+from utils import ObservationType, OBS_DICT
+from utils import ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
+from utils import Timer, need_visualization
+from utils.constants import AGENT_MAX_STEPS
 
 ENV_TYPE = "local"
 try:    
@@ -25,9 +25,9 @@ try:
     ENV_TYPE = "deploy"
 except ImportError:
     # for test environments
-    from .temp.logger import agent_logger as logger
-    from .temp.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
-    from .temp.desktop_env import DesktopEnv
+    from temp.logger import agent_logger as logger
+    from temp.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
+    from temp.desktop_env import DesktopEnv
 
 class BaseAgent(ABC):
     """Base class for all agents in the system.

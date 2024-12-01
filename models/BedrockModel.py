@@ -9,14 +9,14 @@ import base64
 import json
 from .BaseModel import BaseModel
 
-from ..utils import Timer
+from utils import Timer
 
 ENV_TYPE = "local"
 try:
     from backend.logger import model_logger as logger
     ENV_TYPE = "deploy"
 except:
-    from ..temp.logger import model_logger as logger
+    from temp.logger import model_logger as logger
     
 
 ModelName2ModelID = {
