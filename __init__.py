@@ -15,6 +15,8 @@ from .utils.exceptions import (
 from .utils.utils import Timer, need_visualization
 from .hub.PromptAgent.main import PromptAgent
 from .hub.Anthropic.main import AnthropicComputerDemoAgent
+from .test import *
+from .temp import *
 
 # Make these available when importing from agents
 __all__ = [
@@ -34,5 +36,8 @@ __all__ = [
     'Timer',
     'need_visualization',
     'PromptAgent',
-    'AnthropicComputerDemoAgent'
+    'AnthropicComputerDemoAgent',
+    'DesktopEnv',
+    'test_anthropic_agent_predict',
+    'test_prompt_agent'
 ]

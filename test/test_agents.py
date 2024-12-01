@@ -6,6 +6,7 @@ from ..hub.Anthropic import AnthropicComputerDemoAgent
 from ..hub.PromptAgent import PromptAgent
 from ..AgentManager import SessionConfig
 
+
 @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Anthropic API key not set")
 def test_anthropic_agent_predict():
     """Test agent prediction functionality"""
@@ -20,15 +21,16 @@ def test_anthropic_agent_predict():
         socketio=None,
         stop_event=None
     )
-    
+
     agent = AnthropicComputerDemoAgent(
         env=env,
         obs_options=["screenshot"],
         platform="Ubuntu",
         config=config
     )
-    
+
     agent.run(task_instruction="Open Chrome browser")
+
 
 def test_prompt_agent():
     """Test prompt agent"""
@@ -47,9 +49,16 @@ def test_prompt_agent():
                         model_name="gpt-4o",
                         obs_options=["screenshot"],
                         platform="Ubuntu",
-                        config=config,   
-    )
+                        config=config,
+                        )
     agent.run(task_instruction="Open Chrome browser")
+
+# TODO: Add tests for customized agents
+"""
+def test_customized_agent():
+    pass
+"""
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
