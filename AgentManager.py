@@ -5,12 +5,11 @@ from contextlib import contextmanager
 from flask_socketio import SocketIO
 from typing import Any, Dict, Optional
 
-from backend.agents.observation.obs_utils import encode_image
+from .observation.obs_utils import encode_image
 from backend.api.data_manager import Conversation, Session
-from backend.agents.utils.exceptions import StopExecution
+from .utils.exceptions import StopExecution
 from backend.main import env_managers, user_manager
-from backend.constants import AgentStatus
-
+from backend.constants import AgentStatus   
 @dataclass
 class SessionConfig:
     user_id: str

@@ -2,22 +2,35 @@ import time
 import threading
 from functools import wraps
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple, TypedDict
+from typing import Dict, List, Optional, Tuple, TypedDict, Any
 
-from backend.agents.action.main import Action
-from backend.constants import AGENT_MAX_STEPS
-from backend.utils.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
-from backend.desktop_env.desktop_env import DesktopEnv
-from backend.agents.AgentManager import SessionConfig, AgentManager
-from backend.logger import agent_logger as logger
-from backend.agents.utils.schemas import ObservationType, OBS_DICT
-from backend.agents.utils.exceptions import EnvironmentError, ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
-from backend.agents.observation.main import Observation
-from backend.agents.utils.utils import Timer, need_visualization
+from .action.main import Action
+from ..constants import AGENT_MAX_STEPS
+from ..utils.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
+from ..desktop_env.desktop_env import DesktopEnv
+from .AgentManager import SessionConfig, AgentManager
+from ..logger import agent_logger as logger
+from .utils.schemas import ObservationType, OBS_DICT
+from .utils.exceptions import EnvironmentError, ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
+from .observation.main import Observation
+from .utils.utils import Timer, need_visualization
 
 class BaseAgent(ABC):
-    """
-    Base class for all agents.
+    """Base class for all agents in the system.
+    
+    This class provides core functionality for agent operations including:
+    - Environment interaction (observation and action execution)
+    - Action prediction
+    - Session management
+    - Error handling and logging
+    
+    Attributes:
+        obs_options (List[ObservationType]): List of observation types to collect
+        env (DesktopEnv): Desktop environment instance
+        max_history_length (int): Maximum number of historical actions to store
+        platform (str): Operating system platform (e.g. 'windows', 'mac')
+        action_space (str): Type of actions available to the agent
+        config (SessionConfig, optional): Configuration for the current session
     """
 
     def __init__(
@@ -27,36 +40,58 @@ class BaseAgent(ABC):
         max_history_length: int,
         platform: str,
         action_space: str,
-        config: SessionConfig = None,
+        config: Optional[SessionConfig] = None,
     ):
-        self._obs: Dict = None
-        self._thought: Dict = None
-        self._action: Dict = None
-        self._step_result: Dict = None
+        # Add type hints and validation for all instance variables
+        self._obs: Optional[Dict] = None
+        self._thought: Optional[Dict] = None
+        self._action: Optional[Dict] = None
+        self._step_result: Optional[Dict] = None
+        self._task_instruction: Optional[str] = None
         
-        self._obs_info: Dict = {}
-        self._predict_info: Dict = {}
-        self._step_info: Dict = {}
-        self.logger = logger
-        self.history: List[Dict] = []
+        # Use TypedDict for structured dictionaries
+        self._obs_info: Dict[str, float] = {}
+        self._predict_info: Dict[str, Any] = {}
+        self._step_info: Dict[str, Any] = {}
+        
+        # Initialize core components
+        self._initialize_components(
+            env=env,
+            obs_options=obs_options,
+            action_space=action_space,
+            platform=platform,
+            max_history_length=max_history_length,
+            config=config
+        )
+        
+    def _initialize_components(self, **kwargs) -> None:
+        """Initialize core agent components with validation."""
+        # Validate required parameters
+        if kwargs['env'] is None:
+            raise ValueError("Environment must be provided")
+        if kwargs['max_history_length'] < 0:
+            raise ValueError("Max history length must be non-negative")
+        if kwargs['platform'] is None:
+            raise ValueError("Platform must be specified")
 
-        self.env = env
-        self.obs_config = Observation(obs_options)
+        # Set up environment
+        self.env = kwargs['env']
+        self.obs_config = Observation(kwargs['obs_options'])
         self.env.set_obs_options(dict(self.obs_config))
-        self.action_space = action_space
-        self.env.action_space = action_space
-        self.max_history_length = max_history_length
-        self.platform = platform
+        
+        # Configure action space
+        self.action_space = kwargs['action_space']
+        self.env.action_space = self.action_space
+        
+        # Set other attributes
+        self.max_history_length = kwargs['max_history_length']
+        self.platform = kwargs['platform']
         self.terminated = False
-
-        self.agent_manager = AgentManager(agent=self, config=config)
-
-        if self.env is None:
-            raise ValueError("Env is not provided")
-        if self.max_history_length < 0:
-            raise ValueError("Max history length should be non-negative")
-        if self.platform is None:
-            raise ValueError("Platform is not provided")
+        self.history: List[Dict] = []
+        self.logger = logger
+        
+        # Initialize agent manager
+        self.agent_manager = AgentManager(agent=self, config=kwargs.get('config'))
 
     def run_decorator(func):
         @wraps(func)
@@ -159,7 +194,6 @@ class BaseAgent(ABC):
                 "Unexpected error getting observation: %s", str(e))
             raise
 
-    # @staticmethod
     def step_decorator(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
@@ -233,17 +267,17 @@ class BaseAgent(ABC):
         return wrapper
 
     @step_decorator
-    def step(self, action: Optional[Dict]):  # -> Tuple[bool, Dict]
+    def step(self, action: Optional[Dict[str, Any]]) -> Tuple[bool, Dict[str, Any]]:
         """Execute one step in the environment with the given action.
-
+        
         Args:
-            action (Dict): Action to execute in the environment
-
+            action: Dictionary containing action parameters
+                   Format depends on action_space configuration
+        
         Returns:
-            Tuple[bool, Dict]: A tuple containing:
-                - bool: Done flag indicating if episode has ended
-                - Dict: Performance metrics including step execution time
-
+            terminated: Whether the episode has ended
+            info: Dictionary containing step execution metrics
+        
         Raises:
             StepError: If environment step execution fails
         """
@@ -251,22 +285,23 @@ class BaseAgent(ABC):
             step_action = Action(action, self.action_space)
             with Timer() as step_timer:
                 terminated, info = self.env.step(step_action.get_action())
-                self.logger.warning(
-                    f"action_space: {self.action_space} {step_action.get_action()}")
+                
+                # Log at debug level instead of warning for action execution
+                self.logger.debug(
+                    f"Executed action in {self.action_space} space: {step_action.get_action()}"
+                )
             
-            info.update({"step_time": step_timer.duration})
-            
+            info["step_time"] = step_timer.duration
             return terminated, info
         
         except Exception as e:
-            self.logger.exception(f"Environment step failed: {str(e)}")
-            raise StepError(f"Failed to execute step: {str(e)}")
+            self.logger.exception("Step execution failed")
+            raise StepError(f"Failed to execute step: {str(e)}") from e
 
     def get_history(self):
         return self.history
 
 
-    # @staticmethod
     def predict_decorator(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
