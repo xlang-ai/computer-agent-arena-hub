@@ -372,3 +372,11 @@ class BaseAgent(ABC):
             e.g. return Input, Output, Others = predict(task_instruction, obs, history)
         """
         pass
+
+if __name__ == "__main__":
+    # test import
+    from .AgentManager import AgentManager
+    from .observation.main import Observation
+    from .action.main import Action
+    from .utils.constants import AgentStatus
+    pass

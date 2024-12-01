@@ -3,7 +3,7 @@ import tiktoken
 from typing import Dict
 import xml.etree.ElementTree as ET
 
-from backend.agents.observation.a11y_tree_utils import (
+from .a11y_tree_utils import (
     draw_bounding_boxes, 
     linearize_accessibility_tree,
     filter_nodes

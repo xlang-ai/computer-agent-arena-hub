@@ -13,8 +13,9 @@ try:
     from ..api.data_manager import Conversation, Session
     from ..main import env_managers, user_manager
 except ImportError:
-    from .temp.api.data_manager import Conversation, Session
-    from .temp.main import env_managers, user_manager
+    pass
+    # from .temp.api.data_manager import Conversation, Session
+    # from .temp.main import env_managers, user_manager
 
 @dataclass
 class SessionConfig:

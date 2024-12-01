@@ -1,6 +1,6 @@
 import time
 from typing import Any
-from backend.agents.utils.exceptions import StepError
+from .exceptions import StepError
 
 class Timer:
     """Context manager for timing code blocks."""

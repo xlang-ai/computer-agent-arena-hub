@@ -1,3 +1,4 @@
+from enum import Enum
 AGENT_MAX_STEPS = 20
 class AgentStatus(Enum):
     IDLE = "agent_idle"
