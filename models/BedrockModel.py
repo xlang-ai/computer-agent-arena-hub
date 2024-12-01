@@ -8,8 +8,16 @@ import io
 import base64
 import json
 from .BaseModel import BaseModel
-from backend.logger import model_logger as logger
-from backend.agents.utils.utils import Timer
+
+from ..utils import Timer
+
+ENV_TYPE = "local"
+try:
+    from backend.logger import model_logger as logger
+    ENV_TYPE = "deploy"
+except:
+    from ..temp.logger import model_logger as logger
+    
 
 ModelName2ModelID = {
     "claude-3-5-haiku-20241022": "us.anthropic.claude-3-5-haiku-20241022-v1:0",

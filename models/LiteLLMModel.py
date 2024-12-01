@@ -3,8 +3,15 @@ import json
 import time
 from litellm import completion
 from .BaseModel import BaseModel
-from backend.logger import model_logger as logger
-from backend.agents.utils.utils import Timer
+
+from ..utils import Timer
+
+ENV_TYPE = "local"
+try:
+    from backend.logger import model_logger as logger
+    ENV_TYPE = "deploy"
+except:
+    from ..temp.logger import model_logger as logger
 
 def setup_api_keys():
     """Setup the API keys.

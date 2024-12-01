@@ -29,46 +29,52 @@
 
 ## 📢 Updates
 - 2024-12-02: Initial beta-release of [Computer Agent Arena](https://arena.xlang.ai) platform 🥳, Try it out!
+- 2024-11-05: [Claude 3.5 Sonnet for computer use](https://www.anthropic.com/news/3-5-models-and-computer-use) agent is available on the platform!
+- 2024-06-07: Basic Prompt Agent is supported on the platform.
 
 ## 📖 Overview
 The [Computer Agent Arena](https://arena.xlang.ai) is an open-ended evaluation platform designed for benchmarking LLMs/VLMs-based AI agents in real-world computer tasks across diverse domains, ranging from general desktop operations to specialized workflows, such as programming, data analysis, and multimedia editing.
 
-This repository hosts the source code implementations for all supported agents on the platform, serving as a foundation to integrate and extend support for additional agents within the Computer Agent Arena ecosystem.
+This repository hosts **the source code implementations for all supported agents on the platform**, serving as a foundation to integrate and extend support for additional agents within the Computer Agent Arena ecosystem.
 
-## 💾 Quick Start
+## 💾 Getting Started
 
 ### Installation
-First, clone the repository:
-```bash
-# Clone the repository
-git clone git@github.com:xlang-ai/Computer-Agent-Arena.git
-cd Computer-Agent-Arena
 
-# Install dependencies
-pip install -r requirements.txt
-```
+1. **Clone the Repository**:
+   ```bash
+   git clone git@github.com:xlang-ai/Computer-Agent-Arena.git
+   cd Computer-Agent-Arena
+   ```
 
-Then, set up the environment variables by copying the example file and filling in the missing information:
-```bash
-# Setup environment variables
-cp .env.example .env
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-"""
-OPENAI_API_KEY=[your OpenAI API key]
-ANTHROPIC_API_KEY=[your Anthropic API key]
-# more keys here...
-"""
-```
+3. **Setup Environment Variables**:
+   Copy the example environment configuration file and fill in the necessary credentials:
+   ```bash
+   cp .env.example .env
+   ```
+   Example `.env` file:
+   ```plaintext
+   OPENAI_API_KEY="sk-[your OpenAI API key]"
+   ANTHROPIC_API_KEY="[your Anthropic API key]"
+   # more keys here...
+   ```
 
-At last, you can test the implemented agents by running:
-```bash
-# Activate the virtual environment
-source .venv/bin/activate
+4. **Run Tests**:
+   Test the default agents to ensure the setup is working:
+   ```bash
+   # Activate the virtual environment
+   source .env
 
-# Run the tests
-python test/test_agents.py
-```
-Once the tests are passed, the environment is set up successfully!
+   # Run the tests
+   python test/test_agents.py
+   ```
+
+If the tests pass, your environment is ready!
 
 ### Implement Customized Agents
 
@@ -79,14 +85,21 @@ Once the tests are passed, the environment is set up successfully!
 Once you have implemented your agent, you can test it by running:
 ```bash
 # Activate the virtual environment
-source .venv/bin/activate
+source .env
 
 # Run the tests
 python test/test_agents.py --agent [your_agent_name]
 ```
-Once the tests are passed, your agent is ready to be plugged into Computer Agent Arena! After that, you can follow the [Contributing Guide](CONTRIBUTING.md) to submit your agent for review.
+
+After testing, submit a pull request (PR) with your implementation. Refer to the [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
+
+Once your PR is submitted, email us at [bryanwang.nlp@gmail.com](mailto:bryanwang.nlp@gmail.com) for further details.
 
 We really appreciate any contributions to improve Computer Agent Arena! If there are any questions, feel free to open an issue or contact us via [email](mailto:bryanwang.nlp@gmail.com).
+
+## 📚 Documentation
+
+For detailed information about the platform and APIs, refer to the official [Documentation](https://xlang-ai.github.io/computer-agent-arena).
 
 ## 📄 Citation
 
@@ -99,3 +112,4 @@ If you find this project useful, please consider citing our project:
   year={2024}
 }
 ```
+    

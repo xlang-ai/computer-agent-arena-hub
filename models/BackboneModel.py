@@ -1,6 +1,11 @@
 from .LiteLLMModel import LiteLLMModel
 from .BedrockModel import BedrockModel
-from backend.logger import model_logger as logger
+
+ENV_TYPE = "local"
+try:
+    from backend.logger import model_logger as logger
+except:
+    from ..temp.logger import model_logger as logger
 
 SUPPORTED_MODELS = {
     "litellm": [

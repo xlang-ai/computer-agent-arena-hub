@@ -3,10 +3,10 @@ Implementation of the Prompt agent class for the agent hub.
 """
 from typing import List, Dict, Optional, Any, Union
 
-from agents.BaseAgent import BaseAgent
-from backend.agents.models.BackboneModel import BackboneModel
-from backend.desktop_env.desktop_env import DesktopEnv
-from backend.agents.hub.PromptAgent.utils import (
+from ...BaseAgent import BaseAgent
+from ...models.BackboneModel import BackboneModel
+
+from .utils import (
     decode_image_from_base64,
     encode_image_to_base64,
     draw_grid_with_number_labels,
@@ -14,13 +14,21 @@ from backend.agents.hub.PromptAgent.utils import (
     parse_code_from_som_string
 )
 
-from backend.agents.hub.PromptAgent.prompt import (
+from .prompt import (
     SYS_PROMPT_IN_SCREENSHOT_OUT_CODE_UBUNTU,
     SYS_PROMPT_IN_SCREENSHOT_OUT_CODE_WINDOWS,
     SYS_PROMPT_IN_A11Y_OUT_CODE, 
     SYS_PROMPT_IN_VISION_ACCESSIBILITY_OUT_CODE, 
     SYS_PROMPT_IN_SOM_OUT_TAG
-    )
+)   
+
+
+ENV_TYPE = "local"
+try:
+    from backend.desktop_env.desktop_env import DesktopEnv
+    ENV_TYPE = "deploy"
+except:
+    from ...temp.desktop_env import DesktopEnv
 
 class PromptAgent(BaseAgent):
     """Implementation of the Prompt agent class for the agent hub.
