@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://arena.xlang.ai">Website</a> •
-  <p>Blog (Coming Soon)</p> •
-  <a>Paper (Coming Soon)</a> •
+  <a href="#">Blog (Coming Soon)</a> •
+  <a href="#">Paper (Coming Soon)</a> •
   <a href="https://xlang-ai.github.io/computer-agent-arena">Documentation</a> •
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
