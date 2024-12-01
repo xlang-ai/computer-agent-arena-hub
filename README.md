@@ -1,11 +1,13 @@
-# Computer Agent Arena
+<p align="center">
+    <img src="assets/banner.png" alt="Computer Agent Arena">
+</p>
 
 <p align="center">
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#documentation">Documentation</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="https://arena.xlang.ai">Website</a> •
+  <p>Blog (Coming Soon)</p> •
+  <a>Paper (Coming Soon)</a> •
+  <a href="https://xlang-ai.github.io/computer-agent-arena">Documentation</a> •
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 <p align="center">
@@ -22,7 +24,7 @@
 </p>
 
 ## 📢 Updates
-- 2024-12-02: Initial beta-release of [Computer Agent Arena platform](https://arena.xlang.ai) 🥳, Try it out!
+- 2024-12-02: Initial beta-release of [Computer Agent Arena](https://arena.xlang.ai) platform 🥳, Try it out!
 
 ## 📖 Overview
 
