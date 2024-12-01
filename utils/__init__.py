@@ -13,6 +13,7 @@ from .exceptions import (
 )
 from .schemas import ObservationType, OBS_DICT
 from .utils import Timer, need_visualization
+from .constants import AGENT_MAX_STEPS, AgentStatus
 
 __all__ = [
     # Exceptions
@@ -28,5 +29,7 @@ __all__ = [
     'OBS_DICT',
     # Utils
     'Timer',
-    'need_visualization'
+    'need_visualization',
+    'AGENT_MAX_STEPS',
+    'AgentStatus'
 ]

@@ -6,10 +6,16 @@ from flask_socketio import SocketIO
 from typing import Any, Dict, Optional
 
 from .observation.obs_utils import encode_image
-from backend.api.data_manager import Conversation, Session
 from .utils.exceptions import StopExecution
-from backend.main import env_managers, user_manager
-from backend.constants import AgentStatus   
+from .utils.constants import AgentStatus
+
+try:
+    from ..api.data_manager import Conversation, Session
+    from ..main import env_managers, user_manager
+except ImportError:
+    from .temp.api.data_manager import Conversation, Session
+    from .temp.main import env_managers, user_manager
+
 @dataclass
 class SessionConfig:
     user_id: str
