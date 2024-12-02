@@ -3,7 +3,7 @@ Utility functions for processing accessibility trees
 """
 
 import io
-from typing import Tuple, List
+from typing import Tuple, List, Any
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageDraw, ImageFont
 
@@ -159,7 +159,7 @@ def linearize_accessibility_tree(accessibility_tree, platform="Ubuntu") -> str:
     return "\n".join(linearized_accessibility_tree)
 
 
-def draw_bounding_boxes(nodes, image_file_content, down_sampling_ratio=1.0, platform="Ubuntu") -> Tuple[List[List[int]], List[ET], str, bytes]:
+def draw_bounding_boxes(nodes, image_file_content, down_sampling_ratio=1.0, platform="Ubuntu") -> Tuple[List[List[int]], Any, str, bytes]:
     """Draw the bounding boxes of the nodes on the image.
 
     Args:
@@ -169,7 +169,7 @@ def draw_bounding_boxes(nodes, image_file_content, down_sampling_ratio=1.0, plat
         platform: The platform of the accessibility tree
 
     Returns:
-        Tuple[List[List[int]], List[ET], str, bytes]: The marks, drew nodes, text information, and the image content
+        Tuple[List[List[int]], Any, str, bytes]: The marks, drew nodes, text information, and the image content
     """
     _state_ns = state_ns_ubuntu
     _component_ns = component_ns_ubuntu
