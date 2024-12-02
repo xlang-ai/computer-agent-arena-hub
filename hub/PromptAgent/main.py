@@ -213,10 +213,11 @@ class PromptAgent(BaseAgent):
         response_text, model_usage, response = response['response_text'], response['model_usage'], response['response']
         
         actions = self.parse_actions(response_text)
+        thoughts = self.parse_thoughts(response_text)
         # self.logger.info(f"response:\n{response_text}")
         self.logger.info(f"{self.class_name} model_usage: {model_usage}")
         
-        self._obs, self._actions, self._thought = obs, actions, response_text
+        self._obs, self._actions, self._thought = obs, actions, thoughts
         self.history.append({
             "obs": self._obs,
             "actions": self._actions,
@@ -227,7 +228,7 @@ class PromptAgent(BaseAgent):
             actions,
             {
                 "model_usage": model_usage,
-                "response": response_text, 
+                "response": thoughts, 
                 "messages": messages
             }
         )
@@ -257,6 +258,15 @@ class PromptAgent(BaseAgent):
             raise ValueError(f"Invalid combination: action_space={self.action_space}, obs_options={self.obs_config.to_string()}")
 
         return parser(response, masks) if obs_key == "som" else parser(response)
+    
+    def parse_thoughts(self, response: str) -> str:
+        """Parse the thoughts from the response.
+
+        Args:
+            response: The response
+        """
+        # 移除response中用```包裹的部分
+        return re.sub(r"```.*?```", "", response, flags=re.DOTALL).strip()
     
     @BaseAgent.run_decorator
     def run(self, task_instruction: str):
