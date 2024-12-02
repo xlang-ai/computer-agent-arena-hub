@@ -83,7 +83,7 @@ def judge_node(node: ET, platform="Ubuntu", check_image=False) -> bool:
     keeps = keeps and coordinates[0] >= 0 and coordinates[1] >= 0 and sizes[0] > 0 and sizes[1] > 0
     return keeps
 
-def filter_nodes(root: ET, platform="Ubuntu", check_image=False) -> List[ET]:
+def filter_nodes(root: ET, platform="Ubuntu", check_image=False) -> Any:
     """Filter the nodes in the accessibility tree.
 
     Args:
@@ -92,7 +92,7 @@ def filter_nodes(root: ET, platform="Ubuntu", check_image=False) -> List[ET]:
         check_image: Whether to check for image nodes
 
     Returns:
-        List[ET]: The filtered nodes
+        Any: The filtered nodes
     """
     filtered_nodes = []
 
