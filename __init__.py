@@ -30,7 +30,7 @@ except ImportError:
     from hub.PromptAgent.main import PromptAgent
     from hub.Anthropic.main import AnthropicComputerDemoAgent
     from test import test_anthropic_agent, test_prompt_agent
-    from temp import *
+    from test_env import *
 
 # Make these available when importing from agents
 __all__ = [

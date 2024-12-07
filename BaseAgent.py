@@ -34,9 +34,9 @@ except ImportError:
     from utils import Timer, need_visualization
     from utils.constants import AGENT_MAX_STEPS
 
-    from temp.logger import agent_logger as logger
-    from temp.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
-    from temp.desktop_env import DesktopEnv
+    from test_env.logger import agent_logger as logger
+    from test_env.utils import get_temp_video_url, process_action_and_visualize_multiple_clicks, simplify_action
+    from test_env.desktop_env import DesktopEnv
 
 class BaseAgent(ABC):
     """Base class for all agents in the system.

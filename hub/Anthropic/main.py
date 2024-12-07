@@ -44,9 +44,9 @@ except:
     from utils import Timer, need_visualization
     from utils import EnvironmentError, ProcessingError, StepError, StepLimitExceeded, StopExecution, VLMPredictionError
 
-    from temp.logger import computer_use_logger as logger
-    from temp.utils import pretty_print
-    from temp.desktop_env import DesktopEnv
+    from test_env.logger import computer_use_logger as logger
+    from test_env.utils import pretty_print
+    from test_env.desktop_env import DesktopEnv
 
 class AnthropicComputerDemoAgent(BaseAgent):
     def __init__(self,

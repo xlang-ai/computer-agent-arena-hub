@@ -4,7 +4,7 @@ from .BedrockModel import BedrockModel
 try:
     from backend.logger import model_logger as logger
 except:
-    from temp.logger import model_logger as logger
+    from test_env.logger import model_logger as logger
 
 SUPPORTED_MODELS = {
     "litellm": [

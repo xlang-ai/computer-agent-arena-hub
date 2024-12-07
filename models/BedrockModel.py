@@ -16,7 +16,7 @@ try:
 except:
     # for local environment
     from utils import Timer
-    from temp.logger import model_logger as logger
+    from test_env.logger import model_logger as logger
     
 
 ModelName2ModelID = {

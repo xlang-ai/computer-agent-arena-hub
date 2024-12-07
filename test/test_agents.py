@@ -1,7 +1,10 @@
 import os
 import pytest
+import sys
 
-from temp.desktop_env import DesktopEnv
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from test_env import DesktopEnv
 from hub.Anthropic import AnthropicComputerDemoAgent
 from hub.PromptAgent import PromptAgent
 from AgentManager import SessionConfig

@@ -59,9 +59,10 @@ This repository hosts **the source code implementations for all supported agents
    ```
    Example `.env` file:
    ```plaintext
-   OPENAI_API_KEY="sk-[your OpenAI API key]"
-   ANTHROPIC_API_KEY="[your Anthropic API key]"
-   # more keys here...
+    export API_KEYS="{\
+    \"OPENAI_API_KEY\":\"YOUR_KEY_HERE\",\
+    \"GENAI_API_KEY\":\"YOUR_KEY_HERE\",\
+    }"
    ```
 
 4. **Run Tests**:

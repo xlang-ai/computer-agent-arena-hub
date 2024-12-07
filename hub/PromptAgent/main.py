@@ -26,7 +26,7 @@ try:
 except:
     from BaseAgent import BaseAgent
     from models.BackboneModel import BackboneModel
-    from temp.desktop_env import DesktopEnv
+    from test_env.desktop_env import DesktopEnv
 
 class PromptAgent(BaseAgent):
     """Implementation of the Prompt agent class for the agent hub.
