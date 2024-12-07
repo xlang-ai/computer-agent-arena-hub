@@ -8,11 +8,12 @@ from test_env import DesktopEnv
 from hub.Anthropic import AnthropicComputerDemoAgent
 from hub.PromptAgent import PromptAgent
 from AgentManager import SessionConfig
+from hub.Anthropic.utils import APIProvider
 
 
 @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Anthropic API key not set")
 def test_anthropic_agent():
-    return True
+    # return True
     """Test agent prediction functionality"""
     env = DesktopEnv()
     config = SessionConfig(
@@ -30,7 +31,8 @@ def test_anthropic_agent():
         env=env,
         obs_options=["screenshot"],
         platform="Ubuntu",
-        config=config
+        config=config,
+        provider=APIProvider.ANTHROPIC,
     )
 
     agent.run(task_instruction="Open Chrome browser")

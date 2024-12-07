@@ -19,6 +19,8 @@ from .prompt import (
     SYS_PROMPT_IN_SOM_OUT_TAG
 )
 
+import re
+
 try:
     from backend.agents.BaseAgent import BaseAgent
     from backend.agents.models.BackboneModel import BackboneModel

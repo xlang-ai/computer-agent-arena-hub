@@ -62,6 +62,7 @@ This repository hosts **the source code implementations for all supported agents
     export API_KEYS="{\
     \"OPENAI_API_KEY\":\"YOUR_KEY_HERE\",\
     \"GENAI_API_KEY\":\"YOUR_KEY_HERE\",\
+    \"ANTHROPIC_API_KEY\":\"YOUR_KEY_HERE\"\
     }"
    ```
 

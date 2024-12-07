@@ -1,0 +1,18 @@
+Desktop
+├── Taskbar
+│   ├── Start Button
+│   ├── System Tray
+│   │   ├── Network Icon
+│   │   ├── Battery Icon
+│   │   ├── Clock
+│   │   └── Notification Center
+│   └── Open Applications
+│       └── None
+├── Desktop Icons
+│   ├── Recycle Bin
+│   ├── My Computer
+│   ├── Documents
+│   ├── Downloads
+│   └── Chrome Shortcut
+└── Background
+    └── Wallpaper: "Ocean View"

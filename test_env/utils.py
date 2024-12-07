@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Optional, Union, Any, List, Dict
 
 from models.BackboneModel import BackboneModel
+from test_env.logger import agent_logger as logger
 
 
     
@@ -59,7 +60,7 @@ def draw_multiple_clicks_on_image(image, coordinates_list, color="red", size=25,
         draw.rectangle((left, top, right, bottom), outline=color, width=width)
 
 def process_action_and_visualize_multiple_clicks(action, screenshot_base64):
-    if not isinstance(action, str):
+    if not isinstance(action, str) or not screenshot_base64:
         return screenshot_base64
     
     click_coords_list = parse_all_click_coordinates(action)

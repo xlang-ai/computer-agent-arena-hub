@@ -1,0 +1,51 @@
+Desktop
+├── Taskbar
+│   ├── Start Button
+│   ├── System Tray
+│   │   ├── Network Icon
+│   │   ├── Battery Icon
+│   │   ├── Clock
+│   │   └── Notification Center
+│   └── Open Applications
+│       ├── Chrome (focused)
+│       └── File Explorer
+├── Desktop Icons
+│   ├── Recycle Bin
+│   ├── My Computer
+│   ├── Documents
+│   └── Chrome Shortcut
+└── Active Application (Chrome)
+    ├── Address Bar
+    │   ├── URL Input Field
+    │   ├── Back Button
+    │   ├── Forward Button
+    │   ├── Reload Button
+    │   └── Bookmark Star
+    ├── Tabs
+    │   ├── New Tab Button
+    │   ├── Tab: Google
+    │   ├── Tab: Stack Overflow
+    │   └── Tab: Gmail
+    ├── Browser Window
+    │   ├── Main Content Area
+    │   │   ├── Heading: "Welcome to Google"
+    │   │   ├── Search Box
+    │   │   │   ├── Input Field
+    │   │   │   └── Search Button
+    │   │   ├── Link: "About"
+    │   │   ├── Link: "Privacy"
+    │   │   └── Link: "Terms"
+    │   └── Sidebar
+    │       ├── Link: "Bookmarks"
+    │       ├── Link: "History"
+    │       └── Link: "Downloads"
+    ├── Footer
+    │   └── Status Bar
+    │       ├── Zoom Control
+    │       ├── Secure Connection Icon
+    │       └── Site Permissions Button
+    └── Title Bar
+        ├── Chrome Menu Button
+        ├── Minimize Button
+        ├── Maximize Button
+        └── Close Button

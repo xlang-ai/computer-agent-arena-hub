@@ -3,6 +3,7 @@ Base class for all agents in the system.
 """
 import time
 import threading
+import traceback
 from functools import wraps
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple, Any
@@ -240,7 +241,7 @@ class BaseAgent(ABC):
                         
                     self._step_result, self._step_info = func(self, *args, **kwargs)
                     
-                    if need_visualization(action, self.action_space):
+                    if need_visualization(action, self.action_space) and self.agent_manager.config.conversation:
                         time.sleep(0.5)
                         recording_buffer = self.agent_manager.stop_video_recording()
                         tmp_url = get_temp_video_url(
@@ -356,12 +357,12 @@ class BaseAgent(ABC):
                         f"User ID:{self.agent_manager.config.user_id} \n Session ID:{self.agent_manager.config.session_id} \n Agent ID:{self.agent_manager.config.agent_idx} \n Stage:predict \n Execution stopped by user.")
                     raise StopExecution
                 except Exception as e:
+                    self.logger.warning(
+                        f"Prediction attempt {attempt + 1} failed: {str(e)}\n{traceback.format_exc()}")
                     elapsed_time = time.time() - start_time
                     if elapsed_time >= max_total_time or attempt == max_retries - 1:
                         raise VLMPredictionError(
                             f"Prediction failed after {attempt + 1} attempts: {str(e)}")
-                    self.logger.warning(
-                        f"Prediction attempt {attempt + 1} failed, retrying... Error: {str(e)}")
                     time.sleep(1)  # 添加短暂延迟避免立即重试
 
             raise VLMPredictionError(
