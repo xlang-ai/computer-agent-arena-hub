@@ -9,3 +9,4 @@ temp==2020.7.2
 tiktoken==0.8.0
 pytest
 loguru
+jwt
