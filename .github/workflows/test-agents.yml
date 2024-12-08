@@ -11,6 +11,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      API_KEYS: ${{ secrets.API_KEYS }}
 
     steps:
     # Step 1: Checkout the code
