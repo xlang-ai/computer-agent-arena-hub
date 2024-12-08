@@ -10,3 +10,5 @@ tiktoken==0.8.0
 pytest
 loguru
 jwt
+pytz
+desktop_env
