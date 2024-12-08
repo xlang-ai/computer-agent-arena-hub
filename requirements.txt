@@ -3,7 +3,7 @@ boto3==1.35.54
 Flask_SocketIO==5.4.1
 litellm==1.53.1
 logger==1.4
-Pillow==11.0.0
+Pillow==10.1.0
 setuptools==75.1.0
 temp==2020.7.2
 tiktoken==0.8.0
