@@ -1,182 +1,197 @@
 # Contributing to Computer Agent Arena
 
-As you can see, the Computer Agent Arena platform is for comparing different computer agents in real-world tasks. This repo is mainly for developers who want to introduce new agents to the arena. We provide a very friendly and use-to-use framework to plugin new agents. We value every contribution, whether it's adding new agents, fixing bugs, improving documentation, or suggesting new features.
+Welcome to Computer Agent Arena! This guide explains how to contribute your own computer agent to our platform using simple observation and action interfaces.
 
 ## Table of Contents
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Process](#development-process)
-- [Pull Request Guidelines](#pull-request-guidelines)
-- [Commit Guidelines](#commit-guidelines)
-- [Development Setup](#development-setup)
-- [Testing Guidelines](#testing-guidelines)
-- [Documentation Guidelines](#documentation-guidelines)
-- [Community](#community)
+1. [Framework Overview](#framework-overview)
+2. [Core Components](#core-components)
+3. [Implementing Your Agent](#implementing-your-agent)
+4. [Running Tests](#running-tests)
+5. [Submitting Your Agent](#submitting-your-agent)
+6. [FAQ](#faq)
 
-## Code of Conduct
+## Framework Overview
 
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [xlang.agentarena@gmail.com](mailto:xlang.agentarena@gmail.com).
+Our platform follows a simple workflow:
+1. **Observation** – Get the current environment state.
+2. **Prediction** – Determine the next action.
+3. **Action** – Execute the action via a standardized interface.
 
-## Getting Started
+## Core Components
 
-### Issues
-- Search for existing issues before creating a new one
-- Use issue templates when available
-- Provide detailed information about bugs or feature requests
+### Observations
+Observations represent the current state of the computer environment. We support several observation types:
 
-#### Bug Reports Should Include:
-- Clear description of the issue
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots (if applicable)
-- Environment details (OS, browser, etc.)
-- Any relevant code snippets
-
-#### Feature Requests Should Include:
-- Clear description of the feature
-- Use cases and benefits
-- Potential implementation approach
-- Any concerns or challenges
-
-## Development Process
-
-### Branching Strategy
-- `main` - production-ready code
-- `develop` - main development branch
-- `feature/*` - new features
-- `bugfix/*` - bug fixes
-- `hotfix/*` - urgent production fixes
-- `release/*` - release preparation
-
-### Workflow
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes
-4. Push to your branch
-5. Open a Pull Request
-
-## Pull Request Guidelines
-
-### PR Naming Convention
-Format: `[type] Brief description`
-
-Types:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, missing semi-colons, etc.)
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
-
-### PR Process
-1. Fill out the PR template completely
-2. Link related issues
-3. Update documentation if needed
-4. Add/update tests as needed
-5. Ensure CI passes
-6. Request review from maintainers
-7. Address review feedback
-
-### PR Review Criteria
-- Code follows project style guide
-- Tests are included and passing
-- Documentation is updated
-- Commits are properly formatted
-- No merge conflicts
-- CI/CD pipelines pass
-
-## Commit Guidelines
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/) specification:
-
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
+```python
+class ObservationType(Enum):
+    SCREENSHOT = "screenshot"  # Base64 encoded screenshots
+    # A11Y_TREE = "a11y_tree"  # See why not recommended at FAQ
+    # TERMINAL = "terminal"     # Coming soon...
+    # SOM = "som"              # Coming soon...
 ```
 
-Example:
+When initializing your agent, select the observation types you need:
+
+```python
+class MyAgent(BaseAgent):
+    def __init__(self, env, **kwargs):
+        super().__init__(
+            env=env,
+            obs_options=["screenshot"],  # Use desired observation types
+            # additional parameters...
+        )
 ```
-feat(auth): add user authentication endpoint
 
-- Implement JWT token generation
-- Add password hashing
-- Create user validation middleware
+Access observations as follows:
 
-Closes #123
+```python
+# Get the observation (and additional timing info)
+obs, obs_info = self.get_observation()
+
+# Example output:
+# {
+#   "screenshot": "base64_encoded_string"
+# }
 ```
 
-## Development Setup
+*Notes:*
+- **Resolution:** 1080x720 pixels
+- **Color Format:** RGB
+- **obs_info:** Contains performance timing details
 
-1. Clone the repository
-   ```bash
-   git clone git@github.com:xlang-ai/Computer-Agent-Arena.git
-   cd Computer-Agent-Arena
-   ```
+### Actions
 
-2. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
+Our platform mainly uses `pyautogui` for actions. For example:
 
-3. Set up pre-commit hooks
-   ```bash
-   pre-commit install
-   ```
+- **Click:** `pyautogui.click(x=100, y=200)`
+- **Type:** `pyautogui.typewrite("Hello world")`
+- **Extended actions:** `"FAIL"`, `"WAIT"`, `"DONE"`
 
-5. Start development server
-   ```bash
-   python main.py
-   ```
+When implementing your agent, you must specify which action type you want to receive:
 
-## Testing Guidelines
+```python
+class MyAgent(BaseAgent):
+    def __init__(self, env, **kwargs):
+        super().__init__(
+            env=env,
+            action_space="pyautogui",
+            ...
+        )
+```
 
-### Writing Tests
-- Write tests for all new features
-- Maintain or improve code coverage
-- Follow the existing test patterns
-- Include unit and integration tests
+You can parse your agent's output into pure `pyautogui` string (or extended actions string) to be executed in the environment.
 
-### Running Tests
+## Implementing Your Agent
+
+1. **Directory Structure:** Create a new directory in `/hub` for your agent:
+    ```
+    hub/
+      └── MyAgent/
+          ├── __init__.py
+          ├── main.py
+          └── utils.py
+    ```
+
+2. Implement your agent class by inheriting from BaseAgent:
+
+```python:hub/MyAgent/main.py
+from BaseAgent import BaseAgent
+
+class MyAgent(BaseAgent):
+    def __init__(self, env, **kwargs):
+        super().__init__(
+            env=env,
+            obs_options=["screenshot"],  # Choose your observation types
+            platform="Ubuntu",                        # Specify platform
+            action_space="pyautogui",                # Choose action space
+            **kwargs
+        )
+   
+    @BaseAgent.predict_decorator
+    def predict(self, observation):
+        """Generate action based on observation"""
+        # Implement your agent's prediction logic here
+        # Return action in the format matching your action_space
+        action = """
+import pyautogui
+pyautogui.click(x=100, y=200)
+        """
+        return action
+   
+    @BaseAgent.run_decorator
+    def run(self):
+        """Example: Run the agent"""
+        while True:
+            obs, obs_info = self.get_observation()
+            action = self.predict(obs)
+            terminated, info = self.step(action)
+            if terminated:
+                break
+```
+
+3. Register your agent in `hub/__init__.py`:
+```python:hub/__init__.py
+from .MyAgent.main import MyAgent
+
+__all__ = [
+    'PromptAgent',
+    'AnthropicComputerDemoAgent',
+    'MyAgent'  # Add your agent
+]
+```
+
+## Running Tests
+
+1. **Add a Test Case:** For example, in `test/test_agents.py`:
+
+```python
+def test_my_agent():
+    """Test MyAgent functionality."""
+    env = DesktopEnv()
+    config = SessionConfig(
+        user_id="test_user",
+        session_id="test_session",
+        region="test_region",
+        agent_idx=0,
+        session=None,
+        conversation=None,
+        socketio=None,
+        stop_event=None
+    )
+
+    agent = MyAgent(
+      env=env,
+      config=config,
+      platform="Ubuntu",
+      action_space="pyautogui",
+      obs_configs=["screenshot"],
+      **kwargs
+    )
+    agent.run(task_instruction="Open Chrome browser")
+```
+
+2. **Run the Tests:**
+
 ```bash
-
+pip install -r requirements.txt
+python test/test_agents.py
 ```
 
-## Documentation Guidelines
+## Submitting Your Agent
 
-### Code Documentation
-- Use clear variable and function names
-- Add comments for complex logic
-- Include JSDoc for public APIs
-- Keep README up to date
+1. Ensure all local test cases pass.
+2. Fork this repository on GitHub.
+3. Create a Pull Request with your implementation.
+4. Email [us](mailto:bryanwang.nlp@gmail.com) with:
+   - Your PR link
+   - A brief description of your agent
 
-### Technical Documentation
-- Keep documentation in sync with code changes
-- Use clear and concise language
-- Include examples where appropriate
-- Update API documentation
+We will review and, if approved, integrate your agent into the full Arena environment.
 
-## Community
+## FAQ
 
-### Getting Help
-- Check our [FAQ](link-to-faq)
-- Join our [Discord/Slack] community 
-- Stack Overflow tag: [project-tag]
-- GitHub Discussions
+### Why is the `A11Y_TREE` observation type not recommended?
+- **Performance:** Parsing can be slow (~15s on Ubuntu and ~10s on Windows).
+- **Robustness:** Parsing on Windows is unstable due to UIA automation limitations (similar issues exist on MacOS).
 
-### Communication Channels
-- GitHub Issues: Bug reports and feature requests
-- GitHub Discussions: General questions and discussions
-- Slack/Discord: Real-time communication
-- Email: [xlang.agentarena@gmail.com](mailto:xlang.agentarena@gmail.com) for sensitive issues
-
-## License
-
-    By contributing, you agree that your contributions will be licensed under the project's license.
-
----
-
-Thank you for contributing to Computer Agent Arena! 🎉 
+We welcome suggestions on how to improve support for `A11Y_TREE` in the future.
