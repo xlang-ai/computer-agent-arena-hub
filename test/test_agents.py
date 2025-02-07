@@ -1,6 +1,7 @@
 import os
 import pytest
 import sys
+import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -11,7 +12,17 @@ from AgentManager import SessionConfig
 from hub.Anthropic.utils import APIProvider
 
 
-@pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Anthropic API key not set")
+def get_api_key(key_name):
+    """Get API key from environment variable API_KEYS"""
+    api_keys = os.getenv("API_KEYS")
+    if not api_keys:
+        return None
+    try:
+        return json.loads(api_keys).get(key_name)
+    except json.JSONDecodeError:
+        return None
+
+@pytest.mark.skipif(not get_api_key("ANTHROPIC_API_KEY"), reason="Anthropic API key not set")
 def test_anthropic_agent():
     # return True
     """Test agent prediction functionality"""
@@ -37,7 +48,7 @@ def test_anthropic_agent():
 
     agent.run(task_instruction="Open Chrome browser")
 
-@pytest.mark.skipif(not os.getenv("OPENAI_API_KEY"), reason="OpenAI API key not set")
+@pytest.mark.skipif(not get_api_key("OPENAI_API_KEY"), reason="OpenAI API key not set")
 def test_prompt_agent():
     """Test prompt agent"""
     env = DesktopEnv()
