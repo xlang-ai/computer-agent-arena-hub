@@ -147,18 +147,6 @@ __all__ = [
 ```python
 def test_my_agent():
     """Test MyAgent functionality."""
-    env = DesktopEnv()
-    config = SessionConfig(
-        user_id="test_user",
-        session_id="test_session",
-        region="test_region",
-        agent_idx=0,
-        session=None,
-        conversation=None,
-        socketio=None,
-        stop_event=None
-    )
-
     agent = MyAgent(
       env=env,
       config=config,
@@ -190,8 +178,11 @@ We will review and, if approved, integrate your agent into the full Arena enviro
 
 ## FAQ
 
-### Why is the `A11Y_TREE` observation type not recommended?
+<details>
+<summary>Why is the <code>A11Y_TREE</code> observation type not recommended?</summary>
+
 - **Performance:** Parsing can be slow (~15s on Ubuntu and ~10s on Windows).
 - **Robustness:** Parsing on Windows is unstable due to UIA automation limitations (similar issues exist on MacOS).
 
 We welcome suggestions on how to improve support for `A11Y_TREE` in the future.
+</details>
