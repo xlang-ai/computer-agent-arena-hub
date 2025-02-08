@@ -1,12 +1,11 @@
-<p align="center">
+<!-- <p align="center">
     <img src="assets/banner.png" alt="Computer Agent Arena">
 </p>
 
 <p align="center">
   <a href="https://arena.xlang.ai">Website</a> •
-  <a href="#">Blog (Coming Soon)</a> •
+  <a href="https://arena.xlang.ai/blog">Blog (Coming Soon)</a> •
   <a href="#">Paper (Coming Soon)</a> •
-  <a href="https://xlang-ai.github.io/computer-agent-arena">Documentation</a> •
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -25,12 +24,12 @@
 
 <p align="center">
     <img src="assets/example.png" alt="Computer Agent Arena Demo">
-</p>
+</p> -->
 
-## 📢 Updates
+<!-- ## 📢 Updates
 - 2024-12-02: Initial beta-release of [Computer Agent Arena](https://arena.xlang.ai) platform 🥳, Try it out!
 - 2024-11-05: [Claude 3.5 Sonnet for computer use](https://www.anthropic.com/news/3-5-models-and-computer-use) agent is available on the platform!
-- 2024-06-07: Basic Prompt Agent is supported on the platform.
+- 2024-06-07: Basic Prompt Agent is supported on the platform. -->
 
 ## 📖 Overview
 The [Computer Agent Arena](https://arena.xlang.ai) is an open-ended evaluation platform designed for benchmarking LLMs/VLMs-based AI agents in real-world computer tasks across diverse domains, ranging from general desktop operations to specialized workflows, such as programming, data analysis, and multimedia editing.
@@ -108,10 +107,10 @@ For detailed information about the platform and APIs, refer to the official [Doc
 If you find this project useful, please consider citing our project:
 
 ```bibtex
-@misc{ComputerAgentArena2024,
-  title={Computer Agent Arena: Benchmarking VLM Agents for Computer Use in the Wild},
+@misc{ComputerAgentArena2025,
+  title={Computer Agent Arena: Compare & Test AI Agents on Crowdsourced Real-World Computer Use Tasks},
   url={https://arena.xlang.ai},
-  year={2024}
+  year={2025}
 }
 ```
     
