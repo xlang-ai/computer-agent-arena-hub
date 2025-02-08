@@ -83,24 +83,20 @@ If the tests pass, your environment is ready!
 > Check out our [Contributing Guide](CONTRIBUTING.md) to learn how you can plugin your agent to improve Computer Agent Arena!
 
 ### Test Customized Agents
-Once you have implemented your agent, you can test it by running:
+Once you have implemented your agent, you can add it to the test suite by adding a new test function in `test/test_agents.py`.
 ```bash
 # Activate the virtual environment
 source .env
 
-# Run the tests
-python test/test_agents.py --agent [your_agent_name]
+# Run the tests and pass
+python test/test_agents.py
 ```
 
 After testing, submit a pull request (PR) with your implementation. Refer to the [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
 
-Once your PR is submitted, email us at [bryanwang.nlp@gmail.com](mailto:bryanwang.nlp@gmail.com) for further details.
+Once your PR is submitted, email us at [here](mailto:bryanwang.nlp@gmail.com) for further details.
 
 We really appreciate any contributions to improve Computer Agent Arena! If there are any questions, feel free to open an issue or contact us via [email](mailto:bryanwang.nlp@gmail.com).
-
-## 📚 Documentation
-
-For detailed information about the platform and APIs, refer to the official [Documentation](https://xlang-ai.github.io/computer-agent-arena).
 
 ## 📄 Citation
 

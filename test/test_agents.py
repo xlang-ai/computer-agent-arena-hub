@@ -11,6 +11,17 @@ from hub.PromptAgent import PromptAgent
 from AgentManager import SessionConfig
 from hub.Anthropic.utils import APIProvider
 
+env = DesktopEnv()
+config = SessionConfig(
+    user_id="test_user",
+    session_id="test_session",
+    region="test_region",
+    agent_idx=0,
+    session=None,
+    conversation=None,
+    socketio=None,
+    stop_event=None
+)
 
 def get_api_key(key_name):
     """Get API key from environment variable API_KEYS"""
@@ -24,20 +35,7 @@ def get_api_key(key_name):
 
 @pytest.mark.skipif(not get_api_key("ANTHROPIC_API_KEY"), reason="Anthropic API key not set")
 def test_anthropic_agent():
-    # return True
     """Test agent prediction functionality"""
-    env = DesktopEnv()
-    config = SessionConfig(
-        user_id="test_user",
-        session_id="test_session",
-        region="test_region",
-        agent_idx=0,
-        session=None,
-        conversation=None,
-        socketio=None,
-        stop_event=None
-    )
-
     agent = AnthropicComputerDemoAgent(
         env=env,
         obs_options=["screenshot"],
@@ -51,17 +49,6 @@ def test_anthropic_agent():
 @pytest.mark.skipif(not get_api_key("OPENAI_API_KEY"), reason="OpenAI API key not set")
 def test_prompt_agent():
     """Test prompt agent"""
-    env = DesktopEnv()
-    config = SessionConfig(
-        user_id="test_user",
-        session_id="test_session",
-        region="test_region",
-        agent_idx=0,
-        session=None,
-        conversation=None,
-        socketio=None,
-        stop_event=None
-    )
     agent = PromptAgent(env=env,
                         model_name="gpt-4o-mini-2024-07-18",
                         obs_options=["screenshot"],
@@ -72,7 +59,9 @@ def test_prompt_agent():
 
 # TODO: Add tests for customized agents
 """
-def test_customized_agent():
+@pytest.mark.skipif(not get_api_key("MY_KEY"), reason="MY_KEY not set")
+def test_my_agent():
+    # Test your agent here
     pass
 """
 
