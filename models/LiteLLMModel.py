@@ -38,14 +38,21 @@ class LiteLLMModel(BaseModel):
             top_p: The top-p sampling parameter
             temperature: The sampling temperature
         """
-        response = completion(
-                model=self.model_name,
-                messages=messages,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                temperature=temperature,
-                verbose=True
-            )
+        kwargs = {
+            "model": self.model_name,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "top_p": top_p,
+            "temperature": temperature,
+            "verbose": True
+        }
+        
+        # Add special configuration for Qwen models
+        if "qwen" in self.model_name.lower():
+            kwargs["api_key"] = os.getenv("DASHSCOPE_API_KEY")
+            kwargs["base_url"] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+            
+        response = completion(**kwargs)
         
         return response
     
