@@ -433,7 +433,7 @@ Action: finished(content='(873,667)')"""
         mock_response = mock_response.replace("Thought:", "Action_Summary:")
         
         try:
-            mock_response_dict = parse_action_qwen2vl(mock_response, 1000, 1080, 1920)
+            mock_response_dict = parse_action_qwen2vl(mock_response, 1000, 720, 1080)
             print("Parsed action:", mock_response_dict)
             
             rc_response = parse_refine_coordinate_response(

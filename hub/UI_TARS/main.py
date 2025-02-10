@@ -215,12 +215,12 @@ class TARSAgent(BaseAgent):
 
         # Parse actions and thoughts
         try:
-            actions = parse_action_qwen2vl(response_text, 1000, self.env.resolution[1], self.env.resolution[0])
+            actions = parse_action_qwen2vl(response_text, 1000, 720, 1080)
             if not actions:
                 self.logger.warning(f"{self.class_name} No valid actions parsed from response")
                 return None, None
                 
-            pyautogui_actions = parsing_response_to_pyautogui_code(actions, self.env.resolution[1], self.env.resolution[0])
+            pyautogui_actions = parsing_response_to_pyautogui_code(actions, 720, 1080)
             if not pyautogui_actions:
                 self.logger.error(f"{self.class_name} Failed to generate pyautogui code")
                 return None, None
