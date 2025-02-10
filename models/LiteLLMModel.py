@@ -51,6 +51,10 @@ class LiteLLMModel(BaseModel):
         if "qwen" in self.model_name.lower():
             kwargs["api_key"] = os.getenv("DASHSCOPE_API_KEY")
             kwargs["base_url"] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        if "ui-tars" in self.model_name.lower():
+            kwargs["model"] = 'openai/repository'
+            kwargs["api_key"] = os.getenv("UI_TARS_API_KEY")
+            kwargs["base_url"] = "https://fy3q0zar9rx7gs8g.us-east-1.aws.endpoints.huggingface.cloud/v1/"
             
         response = completion(**kwargs)
         

@@ -21,8 +21,8 @@ class DesktopEnv:
         ]
         
         self.a11y_trees = [
-            self._load_accessibility_tree("test_env/test_observations/a11y_tree0.json"),
-            self._load_accessibility_tree("test_env/test_observations/a11y_tree1.json"),
+            self._load_accessibility_tree("test_env/test_observations/a11y_tree0.txt"),
+            self._load_accessibility_tree("test_env/test_observations/a11y_tree1.txt"),
         ]
     
     def _get_screenshot(self):
@@ -45,8 +45,7 @@ class DesktopEnv:
                 # Read the image file in binary mode
                 image_data = image_file.read()
                 # Encode the binary data as Base64
-                base64_string = base64.b64encode(image_data).decode("utf-8")
-                return base64_string
+                return image_data
         except FileNotFoundError:
             print(f"Error: File not found at {image_path}")
         except Exception as e:
