@@ -21,9 +21,7 @@ SUPPORTED_MODELS = {
         'gemini/gemini-2.0-pro-exp-02-05',
         
         'openai/qwen2.5-vl-72b-instruct',
-        # "claude-3-5-sonnet-20241022",
-        # 'claude-3-haiku-20240307'
-        # 'claude-3-opus-20240229',
+        'openai/ui-tars-7b-dpo',
     ],
     "bedrock":{
         "claude-3-5-sonnet-20241022",

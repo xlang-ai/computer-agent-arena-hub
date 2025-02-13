@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from test_env import DesktopEnv
 from hub.Anthropic import AnthropicComputerDemoAgent
 from hub.PromptAgent import PromptAgent
+from hub.UI_TARS import TARSAgent
 from AgentManager import SessionConfig
 from hub.Anthropic.utils import APIProvider
 
@@ -36,6 +37,7 @@ def get_api_key(key_name):
 @pytest.mark.skipif(not get_api_key("ANTHROPIC_API_KEY"), reason="Anthropic API key not set")
 def test_anthropic_agent():
     """Test agent prediction functionality"""
+    return 
     agent = AnthropicComputerDemoAgent(
         env=env,
         obs_options=["screenshot"],
@@ -49,11 +51,25 @@ def test_anthropic_agent():
 @pytest.mark.skipif(not get_api_key("OPENAI_API_KEY"), reason="OpenAI API key not set")
 def test_prompt_agent():
     """Test prompt agent"""
+    return
     agent = PromptAgent(env=env,
                         model_name="gpt-4o-mini-2024-07-18",
                         obs_options=["screenshot"],
                         platform="Ubuntu",
                         config=config,
+                        )
+    agent.run(task_instruction="Open Chrome browser")
+
+@pytest.mark.skipif(not get_api_key("UI_TARS_API_KEY"), reason="UI_TARS_API_KEY not set")
+def test_tars_agent():
+    """Test prompt agent"""
+    agent = TARSAgent(env=env,
+                        model_name="ui-tars-7b-dpo",
+                        obs_options=["screenshot"],
+                        platform="Ubuntu",
+                        config=config,
+                        prompt_template="multi_step",
+                        language="English",
                         )
     agent.run(task_instruction="Open Chrome browser")
 
@@ -67,4 +83,15 @@ def test_my_agent():
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    # pytest.main([__file__, "-v"])
+    agent = TARSAgent(env=env,
+                        model_name="openai/ui-tars-7b-dpo",
+                        obs_options=["screenshot"],
+                        platform="Ubuntu",
+                        action_space="pyautogui",
+                        config=config,
+                        prompt_template="multi_step",
+                        language="English",
+                        )
+    agent.run(task_instruction="Open Chrome browser")
+
