@@ -429,7 +429,7 @@ if __name__ == '__main__':
     def run_tests():
         # Test action parsing
         mock_response = """Thought: Testing action parsing
-Action: finished(content='(873,667)')"""
+Action: drag(start_box='(500,500)', end_box='(1000,1000)')"""
         mock_response = mock_response.replace("Thought:", "Action_Summary:")
         
         try:

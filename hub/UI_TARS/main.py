@@ -9,6 +9,7 @@ from typing import List, Dict, Optional, Any, Union, Tuple
 try:
     from backend.agents.BaseAgent import BaseAgent
     from backend.agents.models.BackboneModel import BackboneModel 
+    from backend.logger import tars_logger as logger
     from backend.desktop_env.desktop_env import DesktopEnv
 except:
     from BaseAgent import BaseAgent
@@ -85,9 +86,9 @@ class TARSAgent(BaseAgent):
         self.top_p = top_p
         self.temperature = temperature
         self.language = language
-        
-        # Configure logging
-        self.logger = logging.getLogger(self.class_name)
+        self.logger = logger
+        self.history_images = []
+        self.history_responses = []
         
         # Select prompt template
         if prompt_template == "no_thought":
@@ -99,24 +100,6 @@ class TARSAgent(BaseAgent):
         else:
             raise ValueError(f"Unknown prompt template: {prompt_template}")
 
-    def _format_history(self, history: List[Dict]) -> str:
-        """Format history into a string.
-        
-        Args:
-            history: List of historical actions and observations
-            
-        Returns:
-            Formatted history string
-        """
-        formatted = ""
-        for i, previous_item in enumerate(history):
-            formatted += f"Step {i + 1}:\n"
-            if 'thought' in previous_item:
-                formatted += f"Thought: {previous_item['thought']}\n"
-            if 'actions' in previous_item:
-                for j, action in enumerate(previous_item['actions'], start=1):
-                    formatted += f"Action {j}: {action}\n"
-        return formatted
 
     def _process_screenshot(self, screenshot: str) -> Tuple[Optional[str], Optional[str]]:
         """Process screenshot and return base64 encoded image.
@@ -148,11 +131,30 @@ class TARSAgent(BaseAgent):
     @BaseAgent.predict_decorator
     def predict(self, task_instruction: str, obs: Dict) -> Tuple[Optional[List], Optional[Dict]]:
         """Predict the next action based on the current observation."""
+        # Add history image handling
+        if not hasattr(self, 'history_images'):
+            self.history_images = []
+        if not hasattr(self, 'history_responses'):
+            self.history_responses = []
+        
+        # Add image to history
+        if "screenshot" in obs:
+            self.history_images.append(obs["screenshot"])
+            # Limit history length
+            if len(self.history_images) > self.max_history_length:
+                self.history_images = self.history_images[-self.max_history_length:]
+
         messages = []
         
         # Add system message with proper formatting
         messages.append({
-            "role": "system",
+            "role": "system", 
+            "content": [{"type": "text", "text": "You are a helpful assistant."}]
+        })
+
+        # Add task instruction
+        messages.append({
+            "role": "user",
             "content": [
                 {
                     "type": "text",
@@ -165,29 +167,43 @@ class TARSAgent(BaseAgent):
             ]
         })
 
-        # Add history context
-        history = self._format_history(self.history[-self.max_history_length:]) if self.history else ""
-
-        # Process screenshot
-        if "screenshot" in obs:
-            # TODO: No need to draw grid for UI-TARS
-            # processed_image, error = self._process_screenshot(obs["screenshot"])
-            # if error:
-            #     self.logger.error(f"{self.class_name} {error}")
-            #     return None, None
-            processed_image = obs["screenshot"]
+        # Add history context and images
+        if self.history_responses:
+            for idx, (hist_response, hist_image) in enumerate(zip(self.history_responses[-self.max_history_length:], 
+                                                                self.history_images[-self.max_history_length-1:-1])):
+                # Add historical image
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{hist_image}",
+                                "detail": "high"
+                            }
+                        }
+                    ]
+                })
                 
+                # Add historical response
+                messages.append({
+                    "role": "assistant",
+                    "content": [hist_response]
+                })
+
+        # Add current screenshot
+        if "screenshot" in obs:
             messages.append({
                 "role": "user",
                 "content": [
                     {
                         "type": "text",
-                        "text": f"{history}\nAnalyze the current screen and determine the next action:"
+                        "text": "Analyze the current screen and determine the next action:"
                     },
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/png;base64,{processed_image}",
+                            "url": f"data:image/png;base64,{obs['screenshot']}",
                             "detail": "high"
                         }
                     }
@@ -211,40 +227,34 @@ class TARSAgent(BaseAgent):
             return None, None
 
         response_text = response['response_text']
+        
         model_usage = response.get('model_usage', {})
 
         # Parse actions and thoughts
         try:
+            self.logger.info(f"Response Text: {response_text}")
+            print("Response Text", response_text)
             actions = parse_action_qwen2vl(response_text, 1000, 720, 1080)
             if not actions:
                 self.logger.warning(f"{self.class_name} No valid actions parsed from response")
                 return None, None
-                
+            print("Actions", actions)
             pyautogui_actions = parsing_response_to_pyautogui_code(actions, 720, 1080)
             if not pyautogui_actions:
                 self.logger.error(f"{self.class_name} Failed to generate pyautogui code")
                 return None, None
-                
+            self.logger.info(f"PyAutoGUI Actions:{pyautogui_actions}")
             thoughts = actions[0]['thought']
             reflection = actions[0]['reflection']
         except Exception as e:
             self.logger.error(f"{self.class_name} Error parsing response: {str(e)}")
             return None, None
 
-        # Update history with validation
-        if obs and pyautogui_actions and thoughts is not None:
-            self._obs, self._actions, self._thought = obs, pyautogui_actions, thoughts
-            self.history.append({
-                "obs": self._obs,
-                "actions": self._actions,
-                "thought": self._thought
-            })
-            
-            # Trim history if it exceeds max length
-            if len(self.history) > self.max_history_length:
-                self.history = self.history[-self.max_history_length:]
-        else:
-            self.logger.warning(f"{self.class_name} Missing required components for history update")
+        # Store response in history
+        if response_text:
+            self.history_responses.append(response_text)
+            if len(self.history_responses) > self.max_history_length:
+                self.history_responses = self.history_responses[-self.max_history_length:]
 
         return (
             [pyautogui_actions],
