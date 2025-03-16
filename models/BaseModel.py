@@ -22,7 +22,7 @@ class BaseModel(ABC):
         self, 
         messages : List, 
         max_tokens : int = 2000, 
-        top_p : float = 0.9, 
+        top_p : float = 1, 
         temperature: float = 0.5) -> Dict:
         """
             Abstract method for model completion, output response and usage info.

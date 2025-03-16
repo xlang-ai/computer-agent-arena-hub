@@ -192,6 +192,7 @@ class AgentManager:
         if ENV_TYPE == "deploy":
             self.config.socketio.emit('message_response_left' if self.config.agent_idx == 0 else 'message_response_right', {
                 "type": "agent",
+                "name": "Computer Agent",
                 "content": {
                     "title": title,
                     "time": time.time() - self.total_time_start,
@@ -216,11 +217,28 @@ class AgentManager:
         if ENV_TYPE == "deploy":
             self.config.socketio.emit('message_response_left' if self.config.agent_idx == 0 else 'message_response_right', {
                 "type": "end",
+                "name": "end",
                 "content": {
                     "title": "end",
                     "time": time.time() - self.total_time_start,
                     "image": "",
                     "description": description,
+                },
+                "user_id": self.config.user_id,
+            })
+
+    def send_user_message(self, message: str) -> None:
+        """Send a user message to the frontend.
+        
+        Args:
+            message: The user message to send
+        """
+        if ENV_TYPE == "deploy":
+            self.config.socketio.emit('message_response_left' if self.config.agent_idx == 0 else 'message_response_right', {
+                'type': 'user',
+                'name': "user",
+                'content': {
+                    'title': message,
                 },
                 "user_id": self.config.user_id,
             })
@@ -289,3 +307,60 @@ class AgentManager:
         except Exception as e:
             self.agent.logger.exception(e)
             raise e
+
+
+    def send_handoff_message(
+        self,
+        from_agent: str,
+        to_agent: str,
+    ) -> None:
+        """Send a handoff message to the frontend when an agent transfers control to another agent.
+        
+        Args:
+            from_agent: The name of the agent transferring control
+            to_agent: The name of the agent receiving controldoff
+        """
+        if ENV_TYPE == "deploy":
+            handoff_message = f"Transferring from {from_agent} to {to_agent}"
+            
+            # Create a timestamp for the handoff event
+            current_time = time.time() - self.total_time_start
+            
+            # Send the handoff message to the frontend
+            self.config.socketio.emit('message_response_left' if self.config.agent_idx == 0 else 'message_response_right', {
+                "type": "handoff",  # Special type for handoff events
+                "name": to_agent,   # Include the name of the agent receiving control
+                "content": {
+                    "title": "Agent Handoff",
+                    "time": current_time,
+                    "image": "",  # No image for handoff events
+                    "description": handoff_message,
+                    "from_agent": from_agent,
+                    "to_agent": to_agent,
+                },
+                "user_id": self.config.user_id,
+            })
+            
+            # Update the session item in the conversation
+            self.update_session_item({
+                "role": "system",
+                "type": "handoff",
+                "content": handoff_message,
+                "metadata": {
+                    "from_agent": from_agent,
+                    "to_agent": to_agent,
+                    "timestamp": current_time
+                }
+            })
+
+    def send_search_message(
+        self,
+        text: str,
+        annotations: List[Dict[str, Any]],
+    ) -> None:
+        """Send a search message to the frontend.
+        
+        Args:
+            text: The text to send
+            annotations: The annotations to send
+        """

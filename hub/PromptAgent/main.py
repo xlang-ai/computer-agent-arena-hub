@@ -41,7 +41,7 @@ class PromptAgent(BaseAgent):
             obs_options=["screenshot"],
             
             max_tokens=2000,
-            top_p=0.9,
+            top_p=1,
             temperature=0.5,
             platform="Ubuntu",
             action_space="pyautogui",
@@ -78,6 +78,9 @@ class PromptAgent(BaseAgent):
         self.temperature = temperature
         self.a11y_tree_max_tokens = a11y_tree_max_tokens
         
+        # Initialize messages list to store conversation history in proper format
+        self.messages = []
+        
         prompt_mapping = {
 
             ("screenshot", "pyautogui"): SYS_PROMPT_IN_SCREENSHOT_OUT_CODE_WINDOWS if self.platform == 'Windows' else SYS_PROMPT_IN_SCREENSHOT_OUT_CODE_UBUNTU,
@@ -106,7 +109,7 @@ class PromptAgent(BaseAgent):
         messages = []
         
         # system prompt
-        messages.append({
+        system_msg = {
             "role": "system",
             "content": [
                 {
@@ -118,28 +121,30 @@ class PromptAgent(BaseAgent):
                         )
                 },
             ]
-        })
+        }
+        
+        # Add system message to the conversation if it's the first message
+        if not self.messages:
+            self.messages.append(system_msg)
+            
+        # Start with system message for this prediction
+        messages.append(system_msg)
 
-        def create_message(obs_type, text_content, history = None, image_content=None, use_grid=True):
+        def create_message(obs_type, text_content, image_content=None, use_grid=True):
             """Create a message.
 
             Args:
                 obs_type: The observation type
                 text_content: The text content
-                history: The history
                 image_content: The image content
                 use_grid: Whether to use a grid
             """
-            history_prompt = ""
-            if history:
-                history_prompt = f"\n\nThe previous observations and actions were:\n{history}\nDo NOT repeat the last action if it's not helpful.\n\n"
-            
             message = {
                 "role": "user",
                 "content": [
                     {
                         "type": "text",
-                        "text": history_prompt+f"Given the {obs_type} as below. What's the next step that you will do to help with the task?\n{text_content}"
+                        "text": f"Given the {obs_type} as below. What's the next step that you will do to help with the task?\n{text_content}"
                     }
                 ]
             }
@@ -160,44 +165,39 @@ class PromptAgent(BaseAgent):
             return message
         
         obs_handlers = {
-            ("a11y_tree", "screenshot"): lambda item, history: create_message(
+            ("a11y_tree", "screenshot"): lambda item: create_message(
                 obs_type="screenshot and info from accessibility tree",
                 text_content=item['a11y_tree'],
-                history=history,
                 image_content=item['screenshot']
             ),
-            ("som",): lambda item, history: create_message(
+            ("som",): lambda item: create_message(
                 obs_type="tagged screenshot",
                 text_content="Please analyze the tagged screenshot.",
-                history=history,
                 image_content=item["som"]
             ),
-            ("screenshot",): lambda item, history: create_message(
+            ("screenshot",): lambda item: create_message(
                 obs_type="screenshot",
                 text_content="Please analyze the screenshot.",
-                history=history,
                 image_content=item["screenshot"]
             ),
-            ("a11y_tree",): lambda item, history: create_message(
+            ("a11y_tree",): lambda item: create_message(
                 obs_type="info from accessibility tree",
-                history=history,
                 text_content=item["a11y_tree"]
             )
         }
         
-        history = ""
-        for i, previous_item in enumerate(self.history[-self.max_history_length:]):
-            history += f"Observation and Action {i + 1}:\n"
-            history += f"  Thought: {previous_item['thought']}\n"
-            
-            # Iterate over each action in the 'actions' list and add it to the history
-            for j, action in enumerate(previous_item['actions'], start=1):
-                history += f"    Action {j}: {action}\n"
-                
+        # Add conversation history to messages
+        if len(self.messages) > 1:  # Skip system message
+            messages.extend(self.messages[1:])
+        
+        # Create and add the current observation message
         obs_keys = tuple(sorted(self.obs_config.obs_options))
         if obs_keys in obs_handlers:
-            # self.logger.warning(f"obs_keys: {obs_keys} obs types: {obs.keys()}")
-            messages.append(obs_handlers[obs_keys](obs, history))
+            current_obs_message = obs_handlers[obs_keys](obs)
+            messages.append(current_obs_message)
+            # Add to history only if we're not in continue_conversation mode
+            # (in that case, we'll add it after getting the response)
+            self.messages.append(current_obs_message)
         else:
             raise ValueError(f"Invalid observation type: {obs_keys} {obs_handlers.keys()}")
         
@@ -208,15 +208,27 @@ class PromptAgent(BaseAgent):
             temperature=self.temperature
         )
 
+
         if not response['response_text']:
             self.logger.error(f"{self.class_name} Empty response: {response}")
             return None, None
         
         response_text, model_usage, response = response['response_text'], response['model_usage'], response['response']
         
+        # Add assistant response to conversation history
+        assistant_message = {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": response_text
+                }
+            ]
+        }
+        self.messages.append(assistant_message)
+        
         actions = self.parse_actions(response_text)
         thoughts = self.parse_thoughts(response_text)
-        # self.logger.info(f"response:\n{response_text}")
         self.logger.info(f"{self.class_name} model_usage: {model_usage}")
         
         self._obs, self._actions, self._thought = obs, actions, thoughts
@@ -277,6 +289,9 @@ class PromptAgent(BaseAgent):
         Args:
             task_instruction: The task instruction
         """
+        # Reset messages for a new run
+        self.messages = []
+        
         while True:
             obs, obs_info = self.get_observation()
             actions, predict_info = self.predict(task_instruction=task_instruction, obs=obs)
@@ -285,4 +300,49 @@ class PromptAgent(BaseAgent):
                 terminated, step_info = self.step(action=action)
                 if terminated:
                     self.terminated = terminated
-                    return  
+                    return
+    
+    @BaseAgent.continue_conversation_decorator
+    def continue_conversation(self, user_message: str):
+        """继续与用户的对话，将新消息追加到历史中。
+        
+        Args:
+            user_message: 用户的新消息
+        """
+        self.logger.info(f"Continuing conversation with message: {user_message[:100]}{'...' if len(user_message) > 100 else ''}")
+        
+        # 添加用户消息到历史
+        user_msg = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": user_message
+                }
+            ]
+        }
+        self.messages.append(user_msg)
+        
+        # 重置步数计数器，确保每次继续对话时都有足够的步数限制
+        if hasattr(self, 'agent_manager') and self.agent_manager is not None:
+            self.agent_manager.step_idx = 0
+            self.logger.info("Reset agent_manager.step_idx to 0 for continuing conversation")
+        
+        # 继续对话直到终止
+        self.terminated = False
+        while not self.terminated:
+            obs, obs_info = self.get_observation()
+            # 注意这里传入空字符串作为task_instruction，表示这是继续对话而不是新任务
+            actions, predict_info = self.predict(task_instruction="", obs=obs)
+            
+            if not actions:
+                self.logger.warning("No actions returned from predict")
+                break
+                
+            self.logger.info(f"PromptAgent continue_conversation actions: {len(actions)} {actions}")
+            
+            for i, action in enumerate(actions):
+                terminated, step_info = self.step(action=action)
+                if terminated:
+                    self.terminated = terminated
+                    return

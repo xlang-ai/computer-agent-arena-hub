@@ -229,8 +229,13 @@ class BaseAgent(ABC):
                 
                 process_result = {}  # Shared storage for the thread result
                 def run_process_thread():
-                    process_result["simplify_result"] = simplify_action(action)
-                    process_result["visualized_screenshot"] = process_action_and_visualize_multiple_clicks(action, self.agent_manager.get_screenshot())
+                    if isinstance(action, dict):
+                        # TODO: here for Operator, optimize me
+                        process_result["simplify_result"] = simplify_action(action.get("action", ""))
+                        process_result["visualized_screenshot"] = process_action_and_visualize_multiple_clicks(action.get("action", ""), self.agent_manager.get_screenshot())
+                    else:
+                        process_result["simplify_result"] = simplify_action(action)
+                        process_result["visualized_screenshot"] = process_action_and_visualize_multiple_clicks(action, self.agent_manager.get_screenshot())
                 process_thread = threading.Thread(target=run_process_thread)
                 process_thread.start()  # Start the simplify_action thread
                 
@@ -387,5 +392,49 @@ class BaseAgent(ABC):
                 - Output: (str) the predicted response or thought.
                 - Others: (List[Dict]) other information to be recorded
             e.g. return Input, Output, Others = predict(task_instruction, obs, history)
+        """
+        pass
+
+    def continue_conversation_decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                self.agent_manager.stop_checkpoint()
+                user_message = kwargs.get("user_message")
+                
+                # 不重置agent_manager的状态，只是发送新消息
+                self.agent_manager.send_user_message(user_message)
+                
+                # 更新会话项
+                self.agent_manager.update_session_item({
+                    "role": "user",
+                    "type": "user_message",
+                    "content": user_message,
+                })
+                
+                # 执行继续对话的方法
+                func(self, *args, **kwargs)
+                self.agent_manager.send_end_message(description=self._step_result)
+            except StopExecution:
+                self.agent_manager.send_end_message(description="user_stop_execution")
+            except StepLimitExceeded:
+                self.agent_manager.send_end_message(description="reach_max_steps")
+            except Exception as e:
+                self.logger.exception(
+                    f"{self.agent_manager.config.user_id} {self.agent_manager.config.session_id} {self.agent_manager.config.agent_idx}")
+                raise e
+            finally:
+                self.agent_manager.finalize()
+        return wrapper
+    
+    @continue_conversation_decorator
+    @abstractmethod
+    def continue_conversation(self, user_message: str):
+        """
+        继续与用户的对话，将新消息追加到历史中。
+        这个方法应该被子类重写以提供具体实现。
+        
+        Args:
+            user_message: 用户的新消息
         """
         pass

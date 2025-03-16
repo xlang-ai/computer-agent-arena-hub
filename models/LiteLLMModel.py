@@ -29,7 +29,7 @@ setup_api_keys()
 class LiteLLMModel(BaseModel):
     """LiteLLM model class for all models"""
     @BaseModel.retry(max_retries=3, retry_delay=2, backoff_factor=2, exceptions=(Exception,))
-    def _completion(self, messages: list, max_tokens: int, top_p: float, temperature: float):
+    def _completion(self, messages: list, max_tokens: int, temperature: float, top_p: float = 1):
         """Completion method for the LiteLLM model.
 
         Args:
@@ -44,7 +44,8 @@ class LiteLLMModel(BaseModel):
             "max_tokens": max_tokens,
             "top_p": top_p,
             "temperature": temperature,
-            "verbose": True
+            "verbose": True,
+            "drop_params": True
         }
         
         # Add special configuration for Qwen models
@@ -60,7 +61,7 @@ class LiteLLMModel(BaseModel):
         
         return response
     
-    def completion(self, messages: list, max_tokens=2000, top_p=0.9, temperature=0.5):
+    def completion(self, messages: list, max_tokens=2000, top_p=1, temperature=0.5):
         """Completion method for the LiteLLM model.
 
         Args:
@@ -74,8 +75,8 @@ class LiteLLMModel(BaseModel):
                 response = self._completion(
                     messages=messages, 
                     max_tokens=max_tokens,
-                    top_p=top_p,
-                    temperature=temperature
+                    temperature=temperature,
+                    top_p=top_p
                     )
 
             if isinstance(response, str) or not response:

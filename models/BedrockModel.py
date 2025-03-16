@@ -158,7 +158,7 @@ class BedrockModel(BaseModel):
             
         return response
     
-    def completion(self, messages: list, max_tokens=2000, top_p=0.9, temperature=0.5):
+    def completion(self, messages: list, max_tokens=2000, top_p=1, temperature=0.5):
         """Completion method for the Bedrock model.
 
         Args:

@@ -43,7 +43,7 @@ class TARSAgent(BaseAgent):
             model_name: str,
             obs_options: List[str] = ["screenshot"],
             max_tokens: int = 2000,
-            top_p: float = 0.9,
+            top_p: float = 1,
             temperature: float = 0.5,
             platform: str = "Ubuntu",
             action_space: str = "pyautogui",
@@ -185,10 +185,9 @@ class TARSAgent(BaseAgent):
                     ]
                 })
                 
-                # Add historical response
                 messages.append({
                     "role": "assistant",
-                    "content": [hist_response]
+                    "content": [{"type": "text", "text": hist_response}]
                 })
 
         # Add current screenshot
@@ -196,10 +195,6 @@ class TARSAgent(BaseAgent):
             messages.append({
                 "role": "user",
                 "content": [
-                    {
-                        "type": "text",
-                        "text": "Analyze the current screen and determine the next action:"
-                    },
                     {
                         "type": "image_url",
                         "image_url": {
@@ -299,4 +294,55 @@ class TARSAgent(BaseAgent):
                         
         except Exception as e:
             self.logger.error(f"{self.class_name} Error in run loop: {str(e)}")
+            self.terminated = True
+
+    @BaseAgent.continue_conversation_decorator
+    def continue_conversation(self, user_message: str) -> None:
+        """继续与用户的对话，将新消息追加到历史中。
+        
+        Args:
+            user_message: 用户的新消息
+        """
+        try:
+            # 添加用户消息到历史
+            self.history.append({
+                "role": "user",
+                "content": user_message
+            })
+            # 重置步数计数器，确保每次继续对话时都有足够的步数限制
+            if hasattr(self, 'agent_manager') and self.agent_manager is not None:
+                self.agent_manager.step_idx = 0
+                self.logger.info("Reset agent_manager.step_idx to 0 for continuing conversation")
+            
+            while True:
+                obs, obs_info = self.get_observation()
+                if obs is None:
+                    self.logger.error(f"{self.class_name} Failed to get observation")
+                    break
+                    
+                # 注意这里不传入task_instruction，而是使用user_message
+                actions, predict_info = self.predict(task_instruction="", obs=obs, user_message=user_message)
+                
+                if actions is None:
+                    self.logger.error(f"{self.class_name} Failed to predict actions")
+                    break
+                
+                self.logger.info(f"{self.class_name} actions: {len(actions)} {actions}")
+                
+                for action in actions:
+                    if action == FINISH_WORD:
+                        self.terminated = True
+                        return
+                        
+                    terminated, step_info = self.step(action=action)
+                    if terminated:
+                        self.terminated = terminated
+                        return
+                        
+                    if step_info.get("status") == ENV_FAIL_WORD:
+                        self.logger.error(f"{self.class_name} Environment failure")
+                        return
+                        
+        except Exception as e:
+            self.logger.error(f"{self.class_name} Error in continue_conversation loop: {str(e)}")
             self.terminated = True
