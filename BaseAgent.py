@@ -139,6 +139,28 @@ class BaseAgent(ABC):
                 self.agent_manager.finalize()
         return wrapper
 
+    def async_run_decorator(func):
+        @wraps(func)
+        async def async_wrapper(self, *args, **kwargs):
+            try:
+                self.agent_manager.stop_checkpoint()
+                self._task_instruction = kwargs.get("task_instruction")
+                self.agent_manager.initialize(
+                    task_instruction=self._task_instruction)
+                result = await func(self, *args, **kwargs)
+                self.agent_manager.send_end_message(description=self._step_result)
+                return result
+            except StopExecution:
+                self.agent_manager.send_end_message(description="user_stop_execution")
+            except StepLimitExceeded:
+                self.agent_manager.send_end_message(description="reach_max_steps")
+            except Exception as e:
+                self.logger.exception(
+                    f"{self.agent_manager.config.user_id} {self.agent_manager.config.session_id} {self.agent_manager.config.agent_idx}")
+                raise e
+            finally:
+                self.agent_manager.finalize()
+        return async_wrapper
     
     @run_decorator
     @abstractmethod
