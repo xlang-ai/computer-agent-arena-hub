@@ -152,8 +152,10 @@ class BaseAgent(ABC):
                 return result
             except StopExecution:
                 self.agent_manager.send_end_message(description="user_stop_execution")
+                logger.info("user_stop_execution")
             except StepLimitExceeded:
                 self.agent_manager.send_end_message(description="reach_max_steps")
+                logger.info("reach_max_steps")
             except Exception as e:
                 self.logger.exception(
                     f"{self.agent_manager.config.user_id} {self.agent_manager.config.session_id} {self.agent_manager.config.agent_idx}")
@@ -460,3 +462,30 @@ class BaseAgent(ABC):
             user_message: 用户的新消息
         """
         pass
+    
+    def async_continue_conversation_decorator(func):
+        @wraps(func)
+        async def wrapper(self, *args, **kwargs):
+            try:
+                self.agent_manager.stop_checkpoint()
+                user_message = kwargs.get("user_message")
+                self.agent_manager.send_user_message(user_message)
+                self.agent_manager.update_session_item({
+                    "role": "user",
+                    "type": "user_message",
+                    "content": user_message,
+                })
+                result = await func(self, *args, **kwargs)
+                self.agent_manager.send_end_message(description=result)
+            except StopExecution:
+                self.agent_manager.send_end_message(description="user_stop_execution")
+            except StepLimitExceeded:
+                self.agent_manager.send_end_message(description="reach_max_steps")
+            except Exception as e:
+                self.logger.exception(
+                    f"{self.agent_manager.config.user_id} {self.agent_manager.config.session_id} {self.agent_manager.config.agent_idx}")
+                raise e
+            finally:
+                self.agent_manager.finalize()
+        return wrapper
+                

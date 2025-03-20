@@ -353,14 +353,47 @@ class AgentManager:
                 }
             })
 
-    def send_search_message(
-        self,
-        text: str,
-        annotations: List[Dict[str, Any]],
-    ) -> None:
-        """Send a search message to the frontend.
+    def send_interact_message(self, text: str) -> None:
+        """Send an interactive message from the agent to the user.
+        
+        This is used when the agent needs to ask questions or provide intermediate updates
+        during processing, rather than just returning final results.
         
         Args:
-            text: The text to send
-            annotations: The annotations to send
+            text: The text message to send to the user
         """
+        if ENV_TYPE == "deploy":
+            # Create a timestamp for the interactive message
+            current_time = time.time() - self.total_time_start
+            
+            # Get the agent name (fallback to generic name if not available)
+            agent_name = getattr(self.agent, "name", "Agent") if hasattr(self.agent, "name") else "Agent"
+            
+            # Send the interactive message to the frontend
+            self.config.socketio.emit('message_response_left' if self.config.agent_idx == 0 else 'message_response_right', {
+                "type": "message",
+                "name": agent_name,
+                "content": {
+                    "title": "Interactive Message",
+                    "time": current_time,
+                    "image": "",  # No image for interactive messages
+                    "description": text,
+                    "action": "interact",  # Special action type for interactive messages
+                    "obs_time": "0",
+                    "agent_time": "0",
+                    "env_time": "0",
+                    "token": 0,
+                    "visualization": ""
+                },
+                "user_id": self.config.user_id,
+            })
+            
+            # Update the session item in the conversation
+            self.update_session_item({
+                "role": "assistant",
+                "type": "interactive",
+                "content": text,
+                "metadata": {
+                    "timestamp": str(current_time)
+                }
+            })

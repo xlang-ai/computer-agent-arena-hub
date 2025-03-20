@@ -88,7 +88,9 @@ class OpenAICUAAgent(BaseAgent):
     def _handle_item(self, item):
         """Parse a pyautogui action from the OpenAI API response"""
         if item["type"] == "message":
-            return None
+            response_text = item.get("text", "")
+            logger.info(f"Received response text: {item}")
+            return response_text
         
         if item["type"] == "function_call":
             return None
@@ -271,11 +273,11 @@ class OpenAICUAAgent(BaseAgent):
                 if scroll_y != 0:
                     # Convert to clicks - normalize the amount
                     clicks = min(max(abs(scroll_y) // 20, 1), 10)  # Cap between 1-10 clicks
-                    return f"import pyautogui\npyautogui.scroll({clicks * (-1 if scroll_y < 0 else 1)}{position_str})"
+                    return f"import pyautogui\npyautogui.scroll({clicks * (1 if scroll_y < 0 else -1)}{position_str})"
                 elif scroll_x != 0:
                     # Convert to clicks - normalize the amount
                     clicks = min(max(abs(scroll_x) // 20, 1), 10)  # Cap between 1-10 clicks
-                    return f"import pyautogui\npyautogui.hscroll({clicks * (-1 if scroll_x < 0 else 1)}{position_str})"
+                    return f"import pyautogui\npyautogui.hscroll({clicks * (1 if scroll_x < 0 else -1)}{position_str})"
                 else:
                     logger.warning("Scroll action with zero scrolling amount")
                     return None
@@ -393,9 +395,13 @@ class OpenAICUAAgent(BaseAgent):
         print(response["output"])
         
         actions = []
+        responses = []
         for item in response["output"]:
-            action = self._handle_item(item)
-            actions.append(action)
+            parsed_item = self._handle_item(item)
+            if parsed_item.get("action_space", None) == "pyautogui":
+                actions.append(parsed_item)
+            else:
+                responses.append(item)
         
         logger.info(f"Predicted {len(actions)} actions")
         predict_info = {
@@ -405,7 +411,7 @@ class OpenAICUAAgent(BaseAgent):
                 "completion_tokens": response.get("usage", {}).get("output_tokens", 0),
             },
             "messages": self.messages,
-            "response": ""
+            "response": responses
         }
         return actions, predict_info
     

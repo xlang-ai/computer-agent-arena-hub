@@ -228,6 +228,8 @@ class AnthropicComputerDemoAgent(BaseAgent):
             self.get_observation()
             actions, predict_info = self.predict(task_instruction)
             if isinstance(actions, list) and len(actions) == 0:
+                #TODO: this means the agent outputs no action but pure message for user to interact with
+                self.agent_manager.send_interact_message(text=predict_info['response'])
                 self.terminated = True
                 return
             

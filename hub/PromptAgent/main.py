@@ -46,7 +46,7 @@ class PromptAgent(BaseAgent):
             platform="Ubuntu",
             action_space="pyautogui",
             
-            max_trajectory_length=5,
+            max_trajectory_length=3,
             a11y_tree_max_tokens=10000,
             config=None,
             **kwargs
@@ -188,7 +188,7 @@ class PromptAgent(BaseAgent):
         
         # Add conversation history to messages
         if len(self.messages) > 1:  # Skip system message
-            messages.extend(self.messages[1:])
+            messages.extend(self.messages[1:][:self.max_history_length])
         
         # Create and add the current observation message
         obs_keys = tuple(sorted(self.obs_config.obs_options))
@@ -295,6 +295,11 @@ class PromptAgent(BaseAgent):
         while True:
             obs, obs_info = self.get_observation()
             actions, predict_info = self.predict(task_instruction=task_instruction, obs=obs)
+            if actions is None or actions == []:
+                #TODO: this means the agent outputs no action but pure message for user to interact with
+                self.agent_manager.send_interact_message(text=predict_info['response'])
+                self.terminated = True
+                return
             self.logger.info(f"PromptAgent actions: {len(actions)} {actions}")
             for i, action in enumerate(actions):
                 terminated, step_info = self.step(action=action)

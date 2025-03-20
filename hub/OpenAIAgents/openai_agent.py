@@ -8,6 +8,7 @@ import asyncio
 import base64
 import json
 import logging
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 try:
@@ -35,7 +36,10 @@ from agents import (
     Runner,
     trace,
     WebSearchTool,
+    set_default_openai_client,
 )
+
+from openai import AsyncOpenAI
 
 from agents.tracing import set_trace_processors
 from .openai_agents_integration import ArenaTraceProcessor
@@ -72,7 +76,8 @@ class ArenaEnv(AsyncComputer):
     @property
     def environment(self) -> Environment:
         """Get the environment type."""
-        return "desktop"
+        # TODO: fix me
+        return "linux"
     
     @property
     def dimensions(self) -> tuple[int, int]:
@@ -87,12 +92,8 @@ class ArenaEnv(AsyncComputer):
             Base64-encoded screenshot
         """
         try:
-            screenshot = self._agent.get_observation()
-            if 'screenshot' in screenshot and screenshot['screenshot']:
-                return base64.b64encode(screenshot['screenshot']).decode('utf-8')
-            else:
-                logger.warning("Screenshot data not found in observation")
-                return ""
+            screenshot, screenshot_info = self._agent.get_observation()
+            return screenshot['screenshot']
         except Exception as e:
             logger.error(f"Error taking screenshot: {e}")
             return ""
@@ -158,14 +159,42 @@ class ArenaEnv(AsyncComputer):
             return
             
         try:
-            # Escape special characters for Python string
-            escaped_text = text.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"')
+            # List of problematic characters that write() might not handle correctly
+            # These are characters that might need special handling with press()
+            problematic_chars = set(['¥', '€', '£', '©', '®', '±', '§', '×', '÷', '°', '¢', '¤', '¦', '¨', 
+                                   'ª', '«', '¬', '¯', '²', '³', 'µ', '¶', '·', '¹', 'º', '»', '¼', '½', 
+                                   '¾', '¿', 'Æ', 'Ç', 'Ð', 'Ñ', 'Ø', 'Œ', 'Þ', 'ß', 'æ', 'ç', 'ð', 'ñ', 
+                                   'ø', 'œ', 'þ', 'ÿ'])
             
-            # Convert to pyautogui command
-            code = f"""import pyautogui \npyautogui.write('{escaped_text}')"""
+            # Generate Python code to handle the input text
+            commands = ["import pyautogui"]
             
-            # Log the action
-            logger.info(f"Executing type: {text[:50]}{'...' if len(text) > 50 else ''}")
+            # Break text into segments - handle regular text with write() and problematic chars with press()
+            current_segment = ""
+            for char in text:
+                if char in problematic_chars:
+                    # Flush any accumulated regular text
+                    if current_segment:
+                        escaped_segment = current_segment.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"')
+                        commands.append(f"pyautogui.write('{escaped_segment}', interval=0.1)")
+                        current_segment = ""
+                    
+                    # Handle the problematic character with press()
+                    escaped_char = char.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"')
+                    commands.append(f"pyautogui.press('{escaped_char}')")
+                else:
+                    current_segment += char
+            
+            # Flush any remaining regular text
+            if current_segment:
+                escaped_segment = current_segment.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"')
+                commands.append(f"pyautogui.write('{escaped_segment}', interval=0.1)")
+            
+            # Combine all commands
+            code = "\n".join(commands)
+            
+            # Log the action (don't log the entire text)
+            logger.info(f"Executing type command for text of length {len(text)}")
             
             # Execute the action
             self._agent.step(code)
@@ -282,7 +311,7 @@ class ArenaEnv(AsyncComputer):
             if scroll_y != 0:
                 # Convert to clicks - normalize the amount
                 clicks = min(max(abs(scroll_y) // 20, 1), 10)  # Cap between 1-10 clicks
-                code = f"""import pyautogui \npyautogui.scroll({clicks * (-1 if scroll_y < 0 else 1)}{position_str})"""
+                code = f"""import pyautogui \npyautogui.scroll({clicks * (1 if scroll_y < 0 else -1)}{position_str})"""
                 
                 # Log the action
                 logger.info(f"Executing vertical scroll: {scroll_y} at ({x}, {y})")
@@ -292,7 +321,7 @@ class ArenaEnv(AsyncComputer):
             elif scroll_x != 0:
                 # Convert to clicks - normalize the amount
                 clicks = min(max(abs(scroll_x) // 20, 1), 10)  # Cap between 1-10 clicks
-                code = f"""import pyautogui \npyautogui.hscroll({clicks * (-1 if scroll_x < 0 else 1)}{position_str})"""
+                code = f"""import pyautogui \npyautogui.hscroll({clicks * (1 if scroll_x < 0 else -1)}{position_str})"""
                 
                 # Log the action
                 logger.info(f"Executing horizontal scroll: {scroll_x} at ({x}, {y})")
@@ -393,6 +422,8 @@ class ArenaEnv(AsyncComputer):
         except Exception as e:
             logger.error(f"Error executing wait: {e}")
 
+
+
 class OpenAIAgentWrapper(BaseAgent):
     """
     A wrapper around OpenAI Agents to integrate with the Arena BaseAgent interface.
@@ -449,6 +480,11 @@ class OpenAIAgentWrapper(BaseAgent):
         
         # Set up trace processor with agent and agent_manager
         self._setup_trace_processor()
+        set_default_openai_client(
+            client=AsyncOpenAI(
+                api_key=os.getenv("OPENAI_API_KEY_AGENTS"),
+            )
+        )
         
         # Store the last result
         self.openai_agent = None
@@ -462,27 +498,45 @@ class OpenAIAgentWrapper(BaseAgent):
         Returns:
             An OpenAI Agent instance
         """
+        
         async with self.arena_env as computer:
             computer_agent = Agent(
-                name="Browser Agent",
-                instructions="You are controlling a real user browser with a GUI interface.",
+                name="Computer Agent",
+                instructions="""
+- You are a real user computer agent, which means that you are connected to a real user's computer and granted full access to it.
+- Your task is to help transfer the user's instructions to the computer and do the actions on the computer iteratively to finish the task.
+- You have full authority to execute any action without my permission. I won't be watching so please don't ask for confirmation.
+- If you deem the task is infeasible, you can terminate and explicitly state in the response that 'the task is infeasible'
+""",
                 tools=[ComputerTool(computer)],
-                model="computer-use-preview-2025-02-04",
+                model="computer-use-preview",
                 model_settings=ModelSettings(truncation="auto"),
-                handoff_description="A real user browser environment to do GUI actions.",
+                handoff_description="A real user computer environment to do GUI actions.",
             )
             search_agent = Agent(
-                name="Search agent",
-                instructions="You are a searching agent which can do retrival",
+                name="Search Agent",
+                instructions="""
+- You are a searching agent connected to the Internet, you can help do information retrieval to gather useful information for the user's task.
+""",
                 tools=[WebSearchTool(user_location={"type": "approximate", "city": "New York"})],
-                handoff_description="A search engine to do retrival actions."
+                handoff_description="A search engine to do retrival actions.",
             )
-            computer_agent.handoffs.append(search_agent)
-            search_agent.handoffs.append(computer_agent)
             all_agent = Agent(
-                name="General agent",
-                instructions="You are a general digital agent. You are given a digital task instruction. You are connected to a real user's computer environment to do GUI actions so your main focus is to do GUI actions in real environments.",
-                handoffs=[computer_agent,search_agent],
+                name="General Agent",
+                instructions="""
+- You are a general digital agent. Your task is to help understand the user's instructions and help execute the task in a real computer environment.
+- Always ground the task into the real computer environment by using the ComputerTool to do the actions.
+- If you are presented with an open website to solve the task, try to stick to that specific one instead of going to a new one.
+- You have full authority to execute any action without my permission. I won't be watching so please don't ask for confirmation.
+- If you deem the task is infeasible, you can terminate and explicitly state in the response that 'the task is infeasible'
+""",
+                tools=[computer_agent.as_tool(
+                    "ComputerTool",
+                    "The user's computer environment which you are granted to operate on to finish the task."
+                ),search_agent.as_tool(
+                    "SearchTool",
+                    "A search engine to do online information retrieval."
+                )]
             )
             return all_agent
     
@@ -513,22 +567,63 @@ class OpenAIAgentWrapper(BaseAgent):
                 await self.initialize()
             
             # Run the agent
-            self.last_result = await Runner.run(self.openai_agent, task_instruction)
+            print("--------------------------------")
+            print("Run the agent")
+            print("--------------------------------")
+            init_screenshot = self.env._get_obs()
+            init_screenshot_base64 = base64.b64encode(init_screenshot["screenshot"]).decode('utf-8')
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": task_instruction+ "Now you are given the screenshot of the initial computer."
+                        },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{init_screenshot_base64}"
+                        },
+                    ]
+                }
+            ]
+            self.last_result = await Runner.run(self.openai_agent, messages)
+            print("--------------------------------")
+            print("Done")
+            print("--------------------------------")
             self.last_result_input_list = self.last_result.to_input_list()
             return self.last_result
             
         except Exception as e:
             logger.exception(f"Error running OpenAI Agent: {e}")
     
-    @BaseAgent.continue_conversation_decorator
-    def continue_conversation(self, user_message: str):
+    @BaseAgent.async_continue_conversation_decorator
+    async def continue_conversation(self, user_message: str):
         """
         Continue the conversation with the OpenAI Agent.
         
         Args:
             user_message: The user's message to continue the conversation
         """
-        pass
+        try:
+            if self.last_result_input_list is None or len(self.last_result_input_list) == 0:
+                return None
+            else:
+                new_messages = self.last_result_input_list
+                new_messages.append({
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": user_message
+                        }
+                    ]
+                })
+                self.last_result = await Runner.run(self.openai_agent, new_messages)
+                self.last_result_input_list = self.last_result.to_input_list()
+                return self.last_result
+        except Exception as e:
+            logger.exception(f"Error continuing conversation: {e}")
     
     @BaseAgent.predict_decorator
     def predict(self, observation: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:

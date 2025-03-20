@@ -12,6 +12,7 @@ try:
         GuardrailSpanData,
     )
     import httpx
+    import copy
 
     AGENTS_AVAILABLE = True
 except ImportError:
@@ -47,13 +48,11 @@ import json
 init()
 
 # Configure the arena logger
-logger = logging.getLogger("arena_logger")
-logger.setLevel(logging.INFO)
-
-# Add handlers as needed - for example, to write to a file
-file_handler = logging.FileHandler("arena.log")
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-logger.addHandler(file_handler)
+try:
+    from backend.logger import openai_agent_logger as logger
+except ImportError:
+    logger = logging.getLogger("arena_logger")
+    logger.setLevel(logging.INFO)
 
 # Optionally add a stream handler if you still want console output
 # stream_handler = logging.StreamHandler()
@@ -353,6 +352,11 @@ class SpanData():
 class ArenaSpanExporter(BackendSpanExporter):
     """
     Custom exporter for Keywords AI that handles all span types and allows for dynamic endpoint configuration.
+    
+    IMPORTANT IMPLEMENTATION NOTE:
+    This exporter and all its methods must NEVER modify the original span data objects.
+    Always create copies of data structures before manipulation to avoid side effects
+    in the agent context. All the methods should treat the span_data parameters as read-only.
     """
 
     def __init__(
@@ -495,12 +499,17 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Extract web search data from response items.
         
+        IMPORTANT: This function should only READ from response_items and NEVER MODIFY them
+        to avoid side effects in the agent context.
+        
         Args:
-            response_items: List of response items from the OpenAI API
+            response_items: List of response items from the OpenAI API (treat as read-only)
             
         Returns:
             Dictionary containing extracted text and annotations
         """
+        # Create a new dictionary to store the extracted data
+        # Never modify the original response_items
         result = {
             "text": None,
             "annotations": [],
@@ -529,7 +538,8 @@ class ArenaSpanExporter(BackendSpanExporter):
                         logger.info(f"Extracted text (first 100 chars): {content_item.text[:100]}...")
                     
                     if hasattr(content_item, "annotations") and content_item.annotations:
-                        result["annotations"] = content_item.annotations
+                        # Store a copy of the annotations list, not the original reference
+                        result["annotations"] = list(content_item.annotations)
                         logger.info(f"Found {len(content_item.annotations)} annotations")
                         
                         # Format annotations for better readability
@@ -546,6 +556,60 @@ class ArenaSpanExporter(BackendSpanExporter):
                             logger.info(f"Annotation {i+1}: {annotation}")
         
         logger.info(f"Web search data extraction complete. Found: {result['web_search_found']}")
+        return result
+
+    def _extract_response_message_data(self, response_items):
+        """
+        Extract response message data from response items.
+        
+        IMPORTANT: This function should only READ from response_items and NEVER MODIFY them
+        to avoid side effects in the agent context.
+        
+        Args:
+            response_items: List of response items from the OpenAI API (treat as read-only)
+            
+        Returns:
+            Dictionary containing a flag indicating if only ResponseOutputMessage was found
+            and the extracted text if applicable
+        """
+        # Create a new dictionary to store the extracted data
+        result = {
+            "response_message_found": False,
+            "text": None
+        }
+        
+        logger.info("Extracting response message data from response items")
+        
+        # Check if all items are ResponseOutputMessage
+        if not response_items:
+            logger.info("No response items found")
+            return result
+            
+        # Check if all items are ResponseOutputMessage type
+        all_output_messages = all(isinstance(item, ResponseOutputMessage) for item in response_items)
+        
+        if not all_output_messages:
+            logger.info("Not all items are ResponseOutputMessage, skipping extraction")
+            return result
+            
+        # If we get here, all items are ResponseOutputMessage
+        result["response_message_found"] = True
+        
+        # Extract text from the first ResponseOutputMessage (or concatenate if multiple)
+        for item in response_items:
+            logger.info(f"Processing ResponseOutputMessage with {len(item.content) if item.content else 0} content items")
+            
+            if item.content:
+                for content_item in item.content:
+                    if hasattr(content_item, "text"):
+                        # If we already have text, append this text
+                        if result["text"]:
+                            result["text"] += "\n" + content_item.text
+                        else:
+                            result["text"] = content_item.text
+                        logger.info(f"Extracted text (first 100 chars): {content_item.text[:100]}...")
+        
+        logger.info(f"Response message data extraction complete. Found: {result['response_message_found']}")
         return result
 
     def _send_search_results_to_frontend(self, web_search_data):
@@ -589,13 +653,18 @@ class ArenaSpanExporter(BackendSpanExporter):
             message = {
                 "type": "agent",
                 "name": "Search Agent",
-                "content": [{
+                "content": {
                     "title": "Search Results",
-                    "time": time.time(),
+                    "time": str(time.time()),
                     "image": "",
                     "description": search_result_json,
                     "action": "search",
-                }],
+                    "obs_time": "0",
+                    "agent_time": "0",
+                    "env_time": "0",
+                    "token": 0,
+                    "visualization": ""
+                },
                 "user_id": self.agent_manager.config.user_id,
             }
             
@@ -612,7 +681,7 @@ class ArenaSpanExporter(BackendSpanExporter):
                 "content": search_result_json,
                 "metadata": {
                     "annotations_count": len(search_result["annotations"]),
-                    "timestamp": time.time()
+                    "timestamp": str(time.time())
                 }
             })
             
@@ -620,13 +689,41 @@ class ArenaSpanExporter(BackendSpanExporter):
         except Exception as e:
             logger.error(f"Error sending search results to frontend: {e}")
 
+    def send_interact_message(self, text):
+        """
+        Send an interactive message from the agent to the user through agent_manager.
+        
+        This is used when the agent needs to ask questions or provide intermediate updates
+        during processing, rather than just returning search results.
+        
+        Args:
+            text: The text message to send to the user
+        """
+        if not self.agent_manager:
+            logger.warning("Agent manager not available, cannot send interactive message")
+            return
+            
+        try:
+            # Log the message being sent
+            logger.info(f"Sending interactive message to frontend: {text[:100]}...")
+            
+            # Call the agent_manager's send_interact_message method
+            self.agent_manager.send_interact_message(text=text)
+            
+            logger.info("Interactive message sent to frontend successfully")
+        except Exception as e:
+            logger.error(f"Error sending interactive message to frontend: {e}")
+
     def _response_data_to_Arena_log(self, data, span_data: ResponseSpanData):
         """
         Convert ResponseSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The ResponseSpanData to convert
+            span_data: The ResponseSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with ResponseSpanData fields mapped to Arena log format
@@ -682,21 +779,11 @@ class ArenaSpanExporter(BackendSpanExporter):
                         
                         # Send the search results to the frontend
                         self._send_search_results_to_frontend(web_search_data)
-                    else:
-                        # Process as normal response
-                        for item in response_items:
-                            if isinstance(item, ResponseOutputMessage):
-                                content = item.content
-                                if content:
-                                    for content_item in content:
-                                        data.output = content_item.text
-                                        print(data.output)
-                            elif isinstance(item, ResponseComputerToolCall):
-                                continue
-                            elif isinstance(item, ResponseFunctionToolCall):
-                                pass
-                            else:
-                                pass
+                    
+                    response_message_data = self._extract_response_message_data(response_items)
+                    if response_message_data["response_message_found"]:
+                        data.output = response_message_data["text"]
+                        self.send_interact_message(text=response_message_data["text"])
                 
             # Truncate base64 images in logs
             truncated_input = _truncate_base64_images(span_data.input)
@@ -713,9 +800,12 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Convert FunctionSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The FunctionSpanData to convert
+            span_data: The FunctionSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with FunctionSpanData fields mapped to Arena log format
@@ -746,9 +836,12 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Convert GenerationSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The GenerationSpanData to convert
+            span_data: The GenerationSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with GenerationSpanData fields mapped to Arena log format
@@ -806,9 +899,12 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Convert HandoffSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The HandoffSpanData to convert
+            span_data: The HandoffSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with HandoffSpanData fields mapped to Arena log format
@@ -841,20 +937,24 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Convert CustomSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The CustomSpanData to convert
+            span_data: The CustomSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with CustomSpanData fields mapped to Arena log format
         """
         data.span_name = span_data.name
-        data.metadata = span_data.data
+        # Create a deep copy of the data dictionary to avoid modifying the original
+        data.metadata = copy.deepcopy(span_data.data) if span_data.data else {}
 
         # If the custom data contains specific fields that map to KeywordsAI fields, extract them
         for key in ["input", "output", "model", "prompt_tokens", "completion_tokens"]:
             if key in span_data.data:
-                data[key] = span_data.data[key]
+                data[key] = copy.deepcopy(span_data.data[key])
 
         logger.info("===============Custom data to Arena log===============")
         logger.info(data)
@@ -864,9 +964,12 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Convert AgentSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The AgentSpanData to convert
+            span_data: The AgentSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with AgentSpanData fields mapped to Arena log format
@@ -874,30 +977,19 @@ class ArenaSpanExporter(BackendSpanExporter):
         data.span_name = span_data.name
         data.span_workflow_name = span_data.name
 
-        # Add tools if available
+        # Add tools if available - make deep copies to avoid modifying originals
         if span_data.tools:
-            data.span_tools = span_data.tools
+            data.span_tools = copy.deepcopy(span_data.tools)
 
-        # Add handoffs if available
+        # Add handoffs if available - make deep copies to avoid modifying originals
         if span_data.handoffs:
-            data.span_handoffs = span_data.handoffs
+            data.span_handoffs = copy.deepcopy(span_data.handoffs)
 
         # Add metadata with agent information
         data.metadata = {
             "output_type": span_data.output_type,
             "agent_name": span_data.name,
         }
-
-        # Add agent name to metadata
-        data.metadata["agent_name"] = span_data.name
-
-        # Add tools to metadata if available
-        if span_data.tools:
-            data.span_tools = span_data.tools
-
-        # Add handoffs to metadata if available
-        if span_data.handoffs:
-            data.span_handoffs = span_data.handoffs
 
         # Set metadata in log data
         data.metadata = data.metadata
@@ -914,9 +1006,12 @@ class ArenaSpanExporter(BackendSpanExporter):
         """
         Convert GuardrailSpanData to Arena log format.
 
+        IMPORTANT: This function should ONLY READ from span_data and NEVER MODIFY it
+        to avoid side effects in the agent context.
+
         Args:
             data: Base data dictionary with trace and span information
-            span_data: The GuardrailSpanData to convert
+            span_data: The GuardrailSpanData to convert (treat as read-only)
 
         Returns:
             Dictionary with GuardrailSpanData fields mapped to Arena log format
@@ -940,6 +1035,9 @@ class ArenaSpanExporter(BackendSpanExporter):
     ) -> Optional[Dict[str, Any]]:
         """
         Process different span types and extract all JSON serializable attributes.
+        
+        IMPORTANT: This function and its callees should NEVER modify the original span_data,
+        only read from it and create new objects.
 
         Args:
             item: A Trace or Span object to export.
@@ -968,6 +1066,8 @@ class ArenaSpanExporter(BackendSpanExporter):
             # data.latency = (data.timestamp - data.start_time).total_seconds()
             # Process the span data based on its type
             try:
+                # Important: We do not modify the original span_data here, only read from it
+                # and create new objects in the data variable
                 if isinstance(item.span_data, ResponseSpanData):
                     self._response_data_to_Arena_log(data, item.span_data)
                 elif isinstance(item.span_data, FunctionSpanData):
@@ -1021,7 +1121,7 @@ class ArenaSpanExporter(BackendSpanExporter):
         data = [item for item in data if item]
 
         return data
-    
+        
         # TODO: no need to export to third party backend, only serve as a processor
         
         
@@ -1087,12 +1187,12 @@ class ArenaTraceProcessor(BatchTraceProcessor):
         project: Optional[str] = None,
         endpoint: str = "https://api.openai.com/v1/traces/ingest",
         max_retries: int = 3,
-        base_delay: float = 1.0,
-        max_delay: float = 30.0,
+        base_delay: float = 0.1,
+        max_delay: float = 5.0,
         max_queue_size: int = 8192,
         max_batch_size: int = 128,
-        schedule_delay: float = 5.0,
-        export_trigger_ratio: float = 0.7,
+        schedule_delay: float = 0.5,
+        export_trigger_ratio: float = 0.3,
         agent = None,
         agent_manager = None,
     ):
