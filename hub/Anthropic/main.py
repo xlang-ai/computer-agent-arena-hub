@@ -131,7 +131,7 @@ class AnthropicComputerDemoAgent(BaseAgent):
             response = client.beta.messages.create(
                 max_tokens=self.max_tokens,
                 messages=self.messages,
-                model=PROVIDER_TO_DEFAULT_MODEL_NAME[self.provider],
+                model=PROVIDER_TO_DEFAULT_MODEL_NAME[self.provider, self.model_name],
                 system=[system],
                 tools=[{'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None}, {'type': 'bash_20241022', 'name': 'bash'}, {
                     'name': 'str_replace_editor', 'type': 'text_editor_20241022'}] if self.platform == 'Ubuntu' else [{'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None}],
@@ -241,5 +241,17 @@ class AnthropicComputerDemoAgent(BaseAgent):
                 "content": step_info['tool_result_content']
             })
 
-
+    @BaseAgent.continue_conversation_decorator
+    def continue_conversation(self, task_instruction: str):
+        self.messages.append({
+            "role": 'user', 
+            "content": task_instruction
+        })
+        while True:
+            self.get_observation()
+            actions, predict_info = self.predict(self.messages)
+            if isinstance(actions, list) and len(actions) == 0:
+                self.agent_manager.send_interact_message(text=predict_info['response'])
+                self.terminated = True
+                return
 

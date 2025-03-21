@@ -22,6 +22,7 @@ except:
 ModelName2ModelID = {
     "claude-3-5-haiku-20241022": "us.anthropic.claude-3-5-haiku-20241022-v1:0",
     "claude-3-5-sonnet-20241022": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+    "claude-3-7-sonnet-20250219": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
     "claude-3-5-sonnet-20240620": "anthropic.claude-3-5-sonnet-20240620-v1:0",
     "claude-3-opus-20240229": "us.anthropic.claude-3-opus-20240229-v1:0",
     "llama3-2-90b-instruct": "us.meta.llama3-2-90b-instruct-v1:0"
