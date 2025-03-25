@@ -94,7 +94,12 @@ class AnthropicComputerDemoAgent(BaseAgent):
             })
             
         enable_prompt_caching = False
-        betas = [COMPUTER_USE_BETA_FLAG]
+        betas = []
+        if self.model_name == "claude-3-7-sonnet-20250124":
+            betas = ["computer-use-2025-01-24"]
+            
+        elif self.model_name == "claude-3-5-sonnet-20241022":
+            betas = [COMPUTER_USE_BETA_FLAG]
         image_truncation_threshold = 10
         if self.provider == APIProvider.ANTHROPIC:
             client = Anthropic(api_key=self.api_key)
@@ -126,15 +131,39 @@ class AnthropicComputerDemoAgent(BaseAgent):
             )
 
         try:
-            self.logger.warning(f"predict message:\n{pretty_print(self.messages)}")
+            tools = []
+            if self.model_name == "claude-3-5-sonnet-20241022":
+                tools = [
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                    {'type': 'bash_20241022', 'name': 'bash'},
+                    {'name': 'str_replace_editor', 'type': 'text_editor_20241022'}
+                ] if self.platform == 'Ubuntu' else [
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                ]
+            elif self.model_name == "claude-3-7-sonnet-20250124":
+                tools = [
+                    {'name': 'computer', 'type': 'computer_20241024', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                    {'type': 'bash_20241022', 'name': 'bash'},
+                    {'name': 'str_replace_editor', 'type': 'text_editor_20241022'}
+                ] if self.platform == 'Ubuntu' else [
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                ]
+            else:
+                tools = [
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                    {'type': 'bash_20241022', 'name': 'bash'},
+                    {'name': 'str_replace_editor', 'type': 'text_editor_20241022'}
+                ] if self.platform == 'Ubuntu' else [
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                ]
+            self.logger.warning(f"predict message:\n{pretty_print(self.messages[-1:])}")
             start_time = time.time()  
             response = client.beta.messages.create(
                 max_tokens=self.max_tokens,
                 messages=self.messages,
                 model=PROVIDER_TO_DEFAULT_MODEL_NAME[self.provider, self.model_name],
                 system=[system],
-                tools=[{'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None}, {'type': 'bash_20241022', 'name': 'bash'}, {
-                    'name': 'str_replace_editor', 'type': 'text_editor_20241022'}] if self.platform == 'Ubuntu' else [{'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None}],
+                tools=tools,
                 betas=betas,
             )
             model_time = time.time() - start_time 
@@ -148,6 +177,7 @@ class AnthropicComputerDemoAgent(BaseAgent):
             return None, None
 
         response_params = _response_to_params(response)
+        logger.info(f"Received response params: {response_params}")
 
         # Store response in message history
         self.messages.append({
@@ -170,6 +200,8 @@ class AnthropicComputerDemoAgent(BaseAgent):
             reasonings = reasonings[0]
         else:
             reasonings = ""
+        logger.info(f"Received actions: {actions}")
+        logger.info(f"Received reasonings: {reasonings}")
         return actions, {
             "messages":  self.messages,
             "response": reasonings,
@@ -231,6 +263,7 @@ class AnthropicComputerDemoAgent(BaseAgent):
                 #TODO: this means the agent outputs no action but pure message for user to interact with
                 self.agent_manager.send_interact_message(text=predict_info['response'])
                 self.terminated = True
+                time.sleep(5)
                 return
             
             # self.logger.warning(f"Computer use actions: {len(actions)} {actions}")
@@ -242,16 +275,23 @@ class AnthropicComputerDemoAgent(BaseAgent):
             })
 
     @BaseAgent.continue_conversation_decorator
-    def continue_conversation(self, task_instruction: str):
+    def continue_conversation(self, user_message: str):
         self.messages.append({
             "role": 'user', 
-            "content": task_instruction
+            "content": user_message
         })
         while True:
             self.get_observation()
             actions, predict_info = self.predict(self.messages)
             if isinstance(actions, list) and len(actions) == 0:
+                #TODO: this means the agent outputs no action but pure message for user to interact with
                 self.agent_manager.send_interact_message(text=predict_info['response'])
                 self.terminated = True
+                time.sleep(5)
                 return
+            terminated, step_info = self.step(actions)
+            self.messages.append({
+                "role": 'user', 
+                "content": step_info['tool_result_content']
+            })
 

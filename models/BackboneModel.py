@@ -10,6 +10,7 @@ SUPPORTED_MODELS = {
     "litellm": [
         "gpt-4o-mini-2024-07-18",
         "gpt-4o-2024-08-06",
+        "gpt-4o-2024-11-20",
         "gpt-4-turbo-2024-04-09",
         "gpt-4.5-preview-2025-02-27",
         "o1-2024-12-17",

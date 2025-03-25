@@ -369,8 +369,17 @@ class ArenaEnv(AsyncComputer):
             
         try:
             if len(path) == 2:
-                start_x, start_y = path[0]
-                end_x, end_y = path[1]
+                # 支持两种格式：(x,y)元组/列表 和 {'x':x, 'y':y}字典
+                if isinstance(path[0], (list, tuple)):
+                    start_x, start_y = path[0]
+                else:  # 字典格式
+                    start_x, start_y = path[0].get('x'), path[0].get('y')
+                    
+                if isinstance(path[1], (list, tuple)):
+                    end_x, end_y = path[1]
+                else:  # 字典格式
+                    end_x, end_y = path[1].get('x'), path[1].get('y')
+                
                 code = f"""import pyautogui \npyautogui.moveTo({start_x}, {start_y}); pyautogui.dragTo({end_x}, {end_y}, duration=0.5, button='left')"""
                 
                 # Log the action
@@ -381,10 +390,20 @@ class ArenaEnv(AsyncComputer):
             else:
                 # For complex paths with multiple points
                 actions = []
-                actions.append(f"import pyautogui \npyautogui.moveTo({path[0][0]}, {path[0][1]})")
+                # 处理第一个点
+                if isinstance(path[0], (list, tuple)):
+                    first_x, first_y = path[0]
+                else:  # 字典格式
+                    first_x, first_y = path[0].get('x'), path[0].get('y')
+                
+                actions.append(f"import pyautogui \npyautogui.moveTo({first_x}, {first_y})")
                 
                 for i in range(1, len(path)):
-                    x, y = path[i]
+                    if isinstance(path[i], (list, tuple)):
+                        x, y = path[i]
+                    else:  # 字典格式
+                        x, y = path[i].get('x'), path[i].get('y')
+                    
                     actions.append(f"pyautogui.dragTo({x}, {y}, duration=0.2, button='left')")
                 
                 code = "; ".join(actions)
@@ -565,11 +584,6 @@ class OpenAIAgentWrapper(BaseAgent):
             # Ensure agent is initialized
             if self.openai_agent is None:
                 await self.initialize()
-            
-            # Run the agent
-            print("--------------------------------")
-            print("Run the agent")
-            print("--------------------------------")
             init_screenshot = self.env._get_obs()
             init_screenshot_base64 = base64.b64encode(init_screenshot["screenshot"]).decode('utf-8')
             messages = [
@@ -588,9 +602,6 @@ class OpenAIAgentWrapper(BaseAgent):
                 }
             ]
             self.last_result = await Runner.run(self.openai_agent, messages)
-            print("--------------------------------")
-            print("Done")
-            print("--------------------------------")
             self.last_result_input_list = self.last_result.to_input_list()
             return self.last_result
             

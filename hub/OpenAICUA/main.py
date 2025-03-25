@@ -88,9 +88,17 @@ class OpenAICUAAgent(BaseAgent):
     def _handle_item(self, item):
         """Parse a pyautogui action from the OpenAI API response"""
         if item["type"] == "message":
-            response_text = item.get("text", "")
-            logger.info(f"Received response text: {item}")
-            return response_text
+            if item.get("content", None) != None:
+                response = item.get("content")[0] if isinstance(item.get("content"), list) else item.get("content")
+                response_type = response.get("type", "")
+                response_text = response.get("text", "")
+                logger.info(f"Received response text: {response_type} - {response_text}")
+                if response_type == "output_text":
+                    return response_text
+                else:
+                    return None
+            else:
+                return None
         
         if item["type"] == "function_call":
             return None
@@ -304,14 +312,33 @@ class OpenAICUAAgent(BaseAgent):
                 start = path[0]
                 end = path[-1]
                 
-                # Validate path coordinates 
-                if not all(isinstance(point, (list, tuple)) and len(point) == 2 for point in path):
+                # Validate path coordinates - handle both (x,y) tuples/lists and {'x':x, 'y':y} dictionaries
+                valid_path = True
+                for point in path:
+                    if isinstance(point, (list, tuple)) and len(point) == 2:
+                        continue
+                    elif isinstance(point, dict) and 'x' in point and 'y' in point:
+                        continue
+                    else:
+                        valid_path = False
+                        break
+                
+                if not valid_path:
                     logger.warning("Invalid path format for drag action")
                     return None
                 
                 if len(path) == 2:
-                    start_x, start_y = start
-                    end_x, end_y = end
+                    # Extract coordinates, handling both formats
+                    if isinstance(start, (list, tuple)):
+                        start_x, start_y = start
+                    else:  # dict format
+                        start_x, start_y = start.get('x'), start.get('y')
+                        
+                    if isinstance(end, (list, tuple)):
+                        end_x, end_y = end
+                    else:  # dict format
+                        end_x, end_y = end.get('x'), end.get('y')
+                    
                     return (
                         f"import pyautogui\n"
                         f"pyautogui.moveTo({start_x}, {start_y})\n"
@@ -320,10 +347,20 @@ class OpenAICUAAgent(BaseAgent):
                 # For complex paths with multiple points
                 else:
                     actions = []
-                    actions.append(f"import pyautogui\npyautogui.moveTo({path[0][0]}, {path[0][1]})")
+                    # Handle first point
+                    if isinstance(path[0], (list, tuple)):
+                        first_x, first_y = path[0]
+                    else:  # dict format
+                        first_x, first_y = path[0].get('x'), path[0].get('y')
+                        
+                    actions.append(f"import pyautogui\npyautogui.moveTo({first_x}, {first_y})")
                     
                     for i in range(1, len(path)):
-                        x, y = path[i]
+                        if isinstance(path[i], (list, tuple)):
+                            x, y = path[i]
+                        else:  # dict format
+                            x, y = path[i].get('x'), path[i].get('y')
+                            
                         actions.append(f"pyautogui.dragTo({x}, {y}, duration=0.2, button='left')")
                     
                     return "\n".join(actions)
@@ -398,10 +435,10 @@ class OpenAICUAAgent(BaseAgent):
         responses = []
         for item in response["output"]:
             parsed_item = self._handle_item(item)
-            if parsed_item.get("action_space", None) == "pyautogui":
+            if isinstance(parsed_item, dict) and parsed_item.get("action_space", None) == "pyautogui":
                 actions.append(parsed_item)
             else:
-                responses.append(item)
+                responses.append(parsed_item)
         
         logger.info(f"Predicted {len(actions)} actions")
         predict_info = {
@@ -411,7 +448,7 @@ class OpenAICUAAgent(BaseAgent):
                 "completion_tokens": response.get("usage", {}).get("output_tokens", 0),
             },
             "messages": self.messages,
-            "response": responses
+            "response": responses.join()
         }
         return actions, predict_info
     
@@ -506,6 +543,12 @@ class OpenAICUAAgent(BaseAgent):
             
             # Get next actions
             actions, predict_info = self.predict(task_instruction)
+            if actions is None or actions == []:
+                #TODO: this means the agent outputs no action but pure message for user to interact with
+                self.agent_manager.send_interact_message(text=predict_info['response'])
+                self.terminated = True
+                time.sleep(5)
+                return
             logger.warning(f"Actions: {actions}")
             for action_idx, action in enumerate(actions):
                 if not action:
@@ -545,6 +588,12 @@ class OpenAICUAAgent(BaseAgent):
             
             # 获取下一步动作，注意这里不传入task_instruction
             actions, predict_info = self.predict("")
+            if actions is None or actions == []:
+                #TODO: this means the agent outputs no action but pure message for user to interact with
+                self.agent_manager.send_interact_message(text=predict_info['response'])
+                self.terminated = True
+                time.sleep(5)
+                return
             logger.warning(f"Actions: {actions}")
             for action_idx, action in enumerate(actions):
                 if not action:

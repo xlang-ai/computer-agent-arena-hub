@@ -4,4 +4,4 @@ from enum import Enum
 Constants for the agents
 """
 
-AGENT_MAX_STEPS = 100 # Maximum number of steps an agent can take
+AGENT_MAX_STEPS = 30 # Maximum number of steps an agent can take

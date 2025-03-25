@@ -1,6 +1,7 @@
 """
 Implementation of the Prompt agent class for the agent hub.
 """
+from time import time
 from typing import List, Dict, Optional, Any, Union
 
 from .utils import (
@@ -299,6 +300,7 @@ class PromptAgent(BaseAgent):
                 #TODO: this means the agent outputs no action but pure message for user to interact with
                 self.agent_manager.send_interact_message(text=predict_info['response'])
                 self.terminated = True
+                time.sleep(5)
                 return
             self.logger.info(f"PromptAgent actions: {len(actions)} {actions}")
             for i, action in enumerate(actions):
@@ -340,10 +342,13 @@ class PromptAgent(BaseAgent):
             # 注意这里传入空字符串作为task_instruction，表示这是继续对话而不是新任务
             actions, predict_info = self.predict(task_instruction="", obs=obs)
             
-            if not actions:
-                self.logger.warning("No actions returned from predict")
-                break
-                
+            if actions is None or actions == []:
+                #TODO: this means the agent outputs no action but pure message for user to interact with
+                self.agent_manager.send_interact_message(text=predict_info['response'])
+                self.terminated = True
+                time.sleep(5)
+                return
+            
             self.logger.info(f"PromptAgent continue_conversation actions: {len(actions)} {actions}")
             
             for i, action in enumerate(actions):
