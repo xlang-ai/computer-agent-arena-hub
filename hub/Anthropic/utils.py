@@ -155,7 +155,8 @@ def _inject_prompt_caching(
         ):
             if breakpoints_remaining:
                 breakpoints_remaining -= 1
-                content[-1]["cache_control"] = BetaCacheControlEphemeralParam(
+                # Use type ignore to bypass TypedDict check until SDK types are updated
+                content[-1]["cache_control"] = BetaCacheControlEphemeralParam(  # type: ignore
                     {"type": "ephemeral"}
                 )
             else:
@@ -184,7 +185,7 @@ def _maybe_filter_to_n_most_recent_images(
             item
             for message in messages
             for item in (
-                message.get("content", []) if isinstance(message, dict) else []
+                message["content"] if isinstance(message["content"], list) else []
             )
             if isinstance(item, dict) and item.get("type") == "tool_result"
         ],
@@ -215,11 +216,22 @@ def _maybe_filter_to_n_most_recent_images(
 
 def _response_to_params(
     response: BetaMessage,
-) -> List[Union[BetaTextBlockParam, BetaToolUseBlockParam]]:
-    res: List[Union[BetaTextBlockParam, BetaToolUseBlockParam]] = []
+) -> list[BetaContentBlockParam]:
+    res: list[BetaContentBlockParam] = []
     for block in response.content:
         if isinstance(block, BetaTextBlock):
-            res.append({"type": "text", "text": block.text})
+            if block.text:
+                res.append(BetaTextBlockParam(type="text", text=block.text))
+            elif getattr(block, "type", None) == "thinking":
+                # Handle thinking blocks - include signature field
+                thinking_block = {
+                    "type": "thinking",
+                    "thinking": getattr(block, "thinking", None),
+                }
+                if hasattr(block, "signature"):
+                    thinking_block["signature"] = getattr(block, "signature", None)
+                res.append(cast(BetaContentBlockParam, thinking_block))
         else:
+            # Handle tool use blocks normally
             res.append(cast(BetaToolUseBlockParam, block.model_dump()))
     return res

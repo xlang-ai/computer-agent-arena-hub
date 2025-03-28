@@ -448,7 +448,7 @@ class OpenAICUAAgent(BaseAgent):
                 "completion_tokens": response.get("usage", {}).get("output_tokens", 0),
             },
             "messages": self.messages,
-            "response": responses.join()
+            "response": responses.join("\n") if isinstance(responses, list) else responses
         }
         return actions, predict_info
     

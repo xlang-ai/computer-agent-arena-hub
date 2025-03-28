@@ -94,12 +94,12 @@ class AnthropicComputerDemoAgent(BaseAgent):
             })
             
         enable_prompt_caching = False
-        betas = []
+        betas = ["computer-use-2025-01-24"]
         if self.model_name == "claude-3-7-sonnet-20250124":
             betas = ["computer-use-2025-01-24"]
-            
         elif self.model_name == "claude-3-5-sonnet-20241022":
             betas = [COMPUTER_USE_BETA_FLAG]
+            
         image_truncation_threshold = 10
         if self.provider == APIProvider.ANTHROPIC:
             client = Anthropic(api_key=self.api_key)
@@ -131,42 +131,48 @@ class AnthropicComputerDemoAgent(BaseAgent):
             )
 
         try:
-            tools = []
+
             if self.model_name == "claude-3-5-sonnet-20241022":
                 tools = [
-                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': 1},
                     {'type': 'bash_20241022', 'name': 'bash'},
                     {'name': 'str_replace_editor', 'type': 'text_editor_20241022'}
                 ] if self.platform == 'Ubuntu' else [
-                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': 1},
                 ]
             elif self.model_name == "claude-3-7-sonnet-20250124":
                 tools = [
-                    {'name': 'computer', 'type': 'computer_20241024', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
-                    {'type': 'bash_20241022', 'name': 'bash'},
-                    {'name': 'str_replace_editor', 'type': 'text_editor_20241022'}
+                    {'name': 'computer', 'type': 'computer_20250124', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': 1},
+                    {'type': 'bash_20250124', 'name': 'bash'},
+                    {'name': 'str_replace_editor', 'type': 'text_editor_20250124'}
                 ] if self.platform == 'Ubuntu' else [
-                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
+                    {'name': 'computer', 'type': 'computer_20250124', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': 1},
                 ]
-            else:
-                tools = [
-                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
-                    {'type': 'bash_20241022', 'name': 'bash'},
-                    {'name': 'str_replace_editor', 'type': 'text_editor_20241022'}
-                ] if self.platform == 'Ubuntu' else [
-                    {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': None},
-                ]
-            self.logger.warning(f"predict message:\n{pretty_print(self.messages[-1:])}")
-            start_time = time.time()  
-            response = client.beta.messages.create(
-                max_tokens=self.max_tokens,
-                messages=self.messages,
-                model=PROVIDER_TO_DEFAULT_MODEL_NAME[self.provider, self.model_name],
-                system=[system],
-                tools=tools,
-                betas=betas,
-            )
-            model_time = time.time() - start_time 
+            self.logger.warning(f"predict message:\n{pretty_print(self.messages)}")
+            extra_body = {
+                "thinking": {"type": "enabled", "budget_tokens": 1024}
+            }
+            start_time = time.time()
+            if self.model_name == "claude-3-7-sonnet-20250124":
+                response = client.beta.messages.create(
+                    max_tokens=self.max_tokens,
+                    messages=self.messages,
+                    model=PROVIDER_TO_DEFAULT_MODEL_NAME[self.provider, self.model_name],
+                    system=[system],
+                    tools=tools,
+                    betas=betas,
+                    extra_body=extra_body
+                    )
+            elif self.model_name == "claude-3-5-sonnet-20241022":
+                response = client.beta.messages.create(
+                    max_tokens=self.max_tokens,
+                    messages=self.messages,
+                    model=PROVIDER_TO_DEFAULT_MODEL_NAME[self.provider, self.model_name],
+                    system=[system],
+                    tools=tools,
+                    betas=betas,
+                )
+            model_time = time.time() - start_time
 
         except (APIError, APIStatusError, APIResponseValidationError) as e:
             self.logger.exception(f"Anthropic API error: {str(e)}")

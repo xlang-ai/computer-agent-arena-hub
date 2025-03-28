@@ -18,10 +18,9 @@ SUPPORTED_MODELS = {
 
         "gemini/gemini-1.5-flash",
         'gemini/gemini-1.5-pro', # 'gemini/gemini-1.5-pro-latest', 'gemini-1.5-pro-exp-0827', 'gemini-1.5-pro-002'
-        'gemini/gemini-exp-1121',
         'gemini/gemini-2.0-flash',
         'gemini/gemini-2.0-flash-thinking-exp-01-21',
-        'gemini/gemini-2.0-pro-exp-02-05',
+        'gemini/gemini-2.5-pro-exp-03-25',
         
         'openai/qwen2.5-vl-72b-instruct',
         'openai/ui-tars-7b-dpo',

@@ -287,7 +287,7 @@ class BaseAgent(ABC):
                     self.agent_manager.send_message(
                         title=process_result.get("simplify_result", action),
                         image=process_result.get("visualized_screenshot", None),
-                        description = self._predict_info.get("response") if isinstance(self._predict_info, str) else "",
+                        description = self._predict_info.get("response") if isinstance(self._predict_info.get("response"), str) else "",
                         obs_time = self._obs_info.get("env_time") if self._obs_info else None,
                         agent_time = self._predict_info.get("model_usage",{}).get("model_time"),
                         env_time = self._step_info.get("step_time"),
