@@ -218,20 +218,23 @@ def _response_to_params(
     response: BetaMessage,
 ) -> list[BetaContentBlockParam]:
     res: list[BetaContentBlockParam] = []
-    for block in response.content:
-        if isinstance(block, BetaTextBlock):
-            if block.text:
-                res.append(BetaTextBlockParam(type="text", text=block.text))
-            elif getattr(block, "type", None) == "thinking":
-                # Handle thinking blocks - include signature field
-                thinking_block = {
-                    "type": "thinking",
-                    "thinking": getattr(block, "thinking", None),
-                }
-                if hasattr(block, "signature"):
-                    thinking_block["signature"] = getattr(block, "signature", None)
-                res.append(cast(BetaContentBlockParam, thinking_block))
-        else:
-            # Handle tool use blocks normally
-            res.append(cast(BetaToolUseBlockParam, block.model_dump()))
-    return res
+    if response.content:
+        for block in response.content:
+            if isinstance(block, BetaTextBlock):
+                if block.text:
+                    res.append(BetaTextBlockParam(type="text", text=block.text))
+                elif getattr(block, "type", None) == "thinking":
+                    # Handle thinking blocks - include signature field
+                    thinking_block = {
+                        "type": "thinking",
+                        "thinking": getattr(block, "thinking", None),
+                    }
+                    if hasattr(block, "signature"):
+                        thinking_block["signature"] = getattr(block, "signature", None)
+                    res.append(cast(BetaContentBlockParam, thinking_block))
+            else:
+                # Handle tool use blocks normally
+                res.append(cast(BetaToolUseBlockParam, block.model_dump()))
+        return res
+    else:
+        return []

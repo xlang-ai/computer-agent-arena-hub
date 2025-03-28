@@ -440,7 +440,8 @@ class OpenAICUAAgent(BaseAgent):
             else:
                 responses.append(parsed_item)
         
-        logger.info(f"Predicted {len(actions)} actions")
+        logger.info(f"Actions: {actions}")
+        logger.info(f"Responses: {responses}")
         predict_info = {
             "model_usage": {
                 "model_time": model_timer.duration,
@@ -448,7 +449,7 @@ class OpenAICUAAgent(BaseAgent):
                 "completion_tokens": response.get("usage", {}).get("output_tokens", 0),
             },
             "messages": self.messages,
-            "response": responses.join("\n") if isinstance(responses, list) else responses
+            "response": "\n".join(responses) if isinstance(responses, list) and all(isinstance(item, str) for item in responses) else ""
         }
         return actions, predict_info
     

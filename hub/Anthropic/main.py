@@ -95,7 +95,7 @@ class AnthropicComputerDemoAgent(BaseAgent):
             
         enable_prompt_caching = False
         betas = ["computer-use-2025-01-24"]
-        if self.model_name == "claude-3-7-sonnet-20250124":
+        if self.model_name == "claude-3-7-sonnet-20250219":
             betas = ["computer-use-2025-01-24"]
         elif self.model_name == "claude-3-5-sonnet-20241022":
             betas = [COMPUTER_USE_BETA_FLAG]
@@ -140,7 +140,7 @@ class AnthropicComputerDemoAgent(BaseAgent):
                 ] if self.platform == 'Ubuntu' else [
                     {'name': 'computer', 'type': 'computer_20241022', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': 1},
                 ]
-            elif self.model_name == "claude-3-7-sonnet-20250124":
+            elif self.model_name == "claude-3-7-sonnet-20250219":
                 tools = [
                     {'name': 'computer', 'type': 'computer_20250124', 'display_width_px': 1280, 'display_height_px': 720, 'display_number': 1},
                     {'type': 'bash_20250124', 'name': 'bash'},
@@ -153,7 +153,8 @@ class AnthropicComputerDemoAgent(BaseAgent):
                 "thinking": {"type": "enabled", "budget_tokens": 1024}
             }
             start_time = time.time()
-            if self.model_name == "claude-3-7-sonnet-20250124":
+            response = None
+            if self.model_name == "claude-3-7-sonnet-20250219":
                 response = client.beta.messages.create(
                     max_tokens=self.max_tokens,
                     messages=self.messages,
