@@ -439,7 +439,7 @@ class OpenAICUAAgent(BaseAgent):
                 actions.append(parsed_item)
             else:
                 responses.append(parsed_item)
-        
+        responses = [item for item in responses if item is not None]
         logger.info(f"Actions: {actions}")
         logger.info(f"Responses: {responses}")
         predict_info = {
@@ -525,14 +525,25 @@ class OpenAICUAAgent(BaseAgent):
             task_instruction: The task instruction
         """
         logger.info(f"Starting agent run with task: {task_instruction[:100]}{'...' if len(task_instruction) > 100 else ''}")
-        
+        init_screenshot = self.env._get_obs()
+        init_screenshot_base64 = base64.b64encode(init_screenshot["screenshot"]).decode('utf-8')
         # Reset conversation history
         self.messages = [
             {
                 "role": "user", 
-                "content": task_instruction
+                "content": [
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/png;base64,{init_screenshot_base64}",
+                    },
+                    {
+                        "type": "input_text",
+                        "text": task_instruction
+                    }
+                ]
             }
         ]
+        
         self.terminated = False
         step_count = 0
         

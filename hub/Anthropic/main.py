@@ -1,3 +1,4 @@
+import base64
 import os
 import json
 import time
@@ -88,9 +89,22 @@ class AnthropicComputerDemoAgent(BaseAgent):
         )
 
         if not self.messages:
+            
+            init_screenshot = self.env._get_obs()
+            init_screenshot_base64 = base64.b64encode(init_screenshot["screenshot"]).decode('utf-8')
             self.messages.append({
                 "role": "user",
-                "content": [{"type": "text", "text": task_instruction}]
+                "content": [
+                    {
+                    "type": "image",
+                    "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": init_screenshot_base64,
+                        },
+                    },
+                    {"type": "text", "text": task_instruction},
+                ]
             })
             
         enable_prompt_caching = False
